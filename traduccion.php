@@ -6,9 +6,10 @@
  * 2010-05-07 quitado ereg para sustituir por preg_match.
  * 
  * nueva versión
- * @TODO 
- *  preg_match devuelve 
+ * 
  */
+
+
 
 
 
@@ -44,9 +45,9 @@ function tDataUnix( $unixTime) {
 
 
 function t ( $string, $args=0 ){
-	/**
-	 * @TODO Implementar el sistema completo de traducción al euskera. De momento, es una simulación para no tener que hacer cambios luego.
-    */
+/**
+ * @TODO Implementar el sistema completo de traducción al euskera. De momento, es una simulación para no tener que hacer cambios luego.
+ */
 
    global $hizkuntza;   
    
@@ -71,6 +72,18 @@ function t ( $string, $args=0 ){
  */
 
 function tSqlCampo( $campo, $alias=""){
+  return tifsql( $campo, $alias="");
+}
+
+function tSqlCampos( ){
+  $campos= func_get_args() ;
+  foreach ($campos as $campo) {
+	$lista .=  ( $lista == ""  ? "": "," ) . tifsql( $campo, $alias="");
+  }
+  return $lista;
+}
+
+function tifsql( $campo, $alias=""){
    global $hizkuntza;
    if ( $hizkuntza == "es" ) {
       $ext0 = "_es";
@@ -87,6 +100,7 @@ function tSqlCampo( $campo, $alias=""){
    
    return "if($campo$ext0='',$campo$ext1,$campo$ext0)$cAlias";
 }
+
 
 
 function tCampo ( $datos, $campo, $idioma="" ) {
@@ -115,6 +129,7 @@ function tCampo ( $datos, $campo, $idioma="" ) {
    }
 
 }
+
 
 function mysql_mlookupGetEuEs ( $cSQL, $hizkuntza = "eu") {
 $aDatos = mysql_query_registro ( $cSQL );
