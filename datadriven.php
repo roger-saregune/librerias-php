@@ -2,7 +2,7 @@
 
 
 /**
- *
+ * CAMBIADO CAMBIADO
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
  * @version 2010-04-30
@@ -132,7 +132,7 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
 
 
     if ( is_array ( $aCampo["campos"])){
-        foreach ( $aCampos["campos"] as $campo => $tipo ){
+        foreach ( $aCampo["campos"] as $campo => $tipo ){
             $aRet["campo"]= $aFila["campo"];
         }
         return $aRet;
