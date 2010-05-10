@@ -2,13 +2,14 @@
 
 
 /**
- * CAMBIADO CAMBIADO
+ *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
  * @version 2010-04-30
  * @author  Roger
  *
  * Correciones
+ * 2010/05/10 correciones menor
  * 2010/05/05 Correciones dd_addlib_request ¿borrador?
  *            campos html.
  * 2010/04/30 Correciones repetidas 
