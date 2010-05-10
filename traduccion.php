@@ -2,25 +2,56 @@
 /**
  * Modulo Traducción
  * 
- * @version 0.01
+ * @version 0.02
+ * 2010-05-10 + tIdiomaDefecto, tIdiomaBase, tIdiomaTabla
  * 2010-05-07 quitado ereg para sustituir por preg_match.
  * 
  * nueva versión
- * 
+ * @TODO. Filosofia!!
+ *        hacerlo solo ¿eu/es? o más general basado en... 
+ *        se desarrolla en un idioma base
+ *        se consulta en otro idioma,
+ *        las traducciones estan en.... 
  */
 
 
 
+global $TIDIOMA_DEFECTO; // el idioma por defecto al que se traduce
+global $TIDIOMA_BASE;    // el idioma en que esta escrito el programa.
+global $TIDIOMA_TABLA; // la tabla para las traducciones
+$TIDIOMA_TABLA = "locale";
+
+
+function tIdiomaBase($idiomaBase){
+   global $TIDIOMA_BASE;
+
+   $TIDIOMA_BASE   = $idiomaBase;
+}
+
+
+function tIdiomaPorDefecto($idioma ){
+   global $TIDIOMA_DEFECTO; 
+         
+   $TIDIOMA_DEFECTO= $idioma;
+}
+
+
+function tIdiomaTabla($tb ){
+   global $TIDIOMA_TABLA; 
+         
+   $TIDIOMA_TABLA= $tb;
+}
+
 
 
 function tData($cFecha, $cSeparador= "-"){
-   global $hizkuntza ;
+   global $TIDIOMA_DEFECTO;
    if ( !preg_match( "#([0-9]{2,4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})#", $cFecha, $aFecha) ) {
       return "";      
    }
       
    // devolver según país.   
-   if ( $hizkuntza == "es") {     
+   if ( $TIDIOMA_DEFECTO == "es") {     
       return $aFecha[3] . $cSeparador . $aFecha[2] . $cSeparador . $aFecha[1];
    } else {
       return  $aFecha[1] . $cSeparador . $aFecha[2] . $cSeparador . $aFecha[3];  
@@ -30,7 +61,6 @@ function tData($cFecha, $cSeparador= "-"){
 
 
 function tTime($cFecha){
-  global $hizkuntza ;
   if ( ! preg_match( "#([0-9]{2,4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})#", $cFecha, $aFecha)){
      return "";
   }
@@ -39,31 +69,34 @@ function tTime($cFecha){
 
 
 function tDataUnix( $unixTime) {
-   global $hizkuntza;
-   return date( $unixTime, ($hizkuntza=="eu" ? "Y/m/d" : "d/m/Y"));    
+   global $TIDIOMA_DEFECTO;
+   return date( $unixTime, ($TIDIOMA_DEFECTO=="eu" ? "Y/m/d" : "d/m/Y"));    
 }
 
 
-function t ( $string, $args=0 ){
-/**
- * @TODO Implementar el sistema completo de traducción al euskera. De momento, es una simulación para no tener que hacer cambios luego.
- */
 
-   global $hizkuntza;   
-   
+function t ( $string, $args=0 ){
+
+   /**
+   * @TODO Implementar el sistema completo de traducción al euskera. De momento, es una simulación para no tener que hacer cambios luego.
+   */
+
+   global $TIDIOMA_DEFECTO, $TIDIOMA_BASE, $TIDIOMA_TABLA;
 
    $traduccion= $string;
    
-   if ( $hizkuntza == "eu" && ( $temp = mysql_mlookup ("SELECT eu FROM locale WHERE es='$string'"))){         
-	   $traduccion= $temp  ;
+   if ( $TIDIOMA_DEFECTO != $TIDIOMA_BASE  &&     
+            $temp = mysql_mlookup ("SELECT $TIDIOMA_DEFECTO FROM $TIDIOMA_TABLA WHERE $TIDIOMA_BASE='$string'") ){            
+	   $traduccion= $temp  ;	   
    } 
+
 
    if ( !$args) {
 	   return $traduccion;
    } else {
 	   return strtr( $traduccion, $args );
    }
-
+   
 }
 
 
@@ -84,8 +117,8 @@ function tSqlCampos( ){
 }
 
 function tifsql( $campo, $alias=""){
-   global $hizkuntza;
-   if ( $hizkuntza == "es" ) {
+   global $TIDIOMA_DEFECTO;
+   if ( $TIDIOMA_DEFECTO == "es" ) {
       $ext0 = "_es";
       $ext1 = "_eu";
    } else {
@@ -109,8 +142,8 @@ function tCampo ( $datos, $campo, $idioma="" ) {
     */
    
    if ( $idioma==""){
-     global $hizkuntza;
-     $idioma = $hizkuntza;
+     global $TIDIOMA_DEFECTO;
+     $idioma = $TIDIOMA_DEFECTO;
    }   
 
    if ( !is_array($datos) ){
@@ -131,10 +164,17 @@ function tCampo ( $datos, $campo, $idioma="" ) {
 }
 
 
-function mysql_mlookupGetEuEs ( $cSQL, $hizkuntza = "eu") {
-$aDatos = mysql_query_registro ( $cSQL );
-if ( $hizkuntza == "eu" )
-   return ( $aDatos[0]!= "" ? $aDatos[0] : $aDatos[1] );
-else
-   return ( $aDatos[1]!= "" ? $aDatos[1] : $aDatos[0] );
+function mysql_mlookupGetEuEs ( $cSQL, $idioma = "") {
+   if ( $idioma==""){
+        global $TIDIOMA_DEFECTO;
+        $idioma = $TIDIOMA_DEFECTO;
+   }   
+   
+   $aDatos = mysql_query_registro ( $cSQL );
+   if ( $idioma == "eu" ) {
+      return ( $aDatos[0]!= "" ? $aDatos[0] : $aDatos[1] );
+   }
+   else {
+      return ( $aDatos[1]!= "" ? $aDatos[1] : $aDatos[0] );
+   }
 }
