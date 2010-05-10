@@ -7,6 +7,10 @@
  * 2010-05-07 quitado ereg para sustituir por preg_match.
  * 
  * nueva versión
+ * @TODO  
+ *        Guardar la configuración en un array: campos para el bilinguismo, traducción de fechas.
+ *        etc.
+ * 
  * @TODO. Filosofia!!
  *        hacerlo solo ¿eu/es? o más general basado en... 
  *        se desarrolla en un idioma base
@@ -14,13 +18,14 @@
  *        las traducciones estan en.... 
  */
 
-
-
 global $TIDIOMA_DEFECTO; // el idioma por defecto al que se traduce
 global $TIDIOMA_BASE;    // el idioma en que esta escrito el programa.
 global $TIDIOMA_TABLA; // la tabla para las traducciones
-$TIDIOMA_TABLA = "locale";
 
+// valores por defecto
+$TIDIOMA_DEFECTO= "es";
+$TIDIOMA_BASE   = "es";
+$TIDIOMA_TABLA = "locale";
 
 function tIdiomaBase($idiomaBase){
    global $TIDIOMA_BASE;
