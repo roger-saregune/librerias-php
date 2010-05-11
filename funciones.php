@@ -7,6 +7,8 @@
   * @version 2010-04-30
   * @licence GPL
 
+  * 2010/05/11 mprint tiene un 3º parametros opcional HTML=true
+  * 2010/05/11 por_defecto ahora devuelve el ultimo argumento
   * 2010/05/04 recuperar funciones de fechas.
   * 2010/04/30 Correciones repetidas
   * 2010-03-22 + por_defecto
@@ -61,12 +63,12 @@
  * miscelania
  */
 
-function mPrint($que,$level=1){
+function mPrint($que,$level=1, $html=true){
    if (is_array($que)) {
       $level++;
       foreach( $que as $i=>$valor){
-         echo "<br>", str_repeat("&nbsp;",$level*3) ,"$i = ";
-         mPrint($valor,$level);            
+         echo ( $html ? "<br>": "\n" ), str_repeat( ($html?"&nbsp;": " "),$level*3) ,"$i = ";
+         mPrint($valor,$level,$html);            
       }   
    } else {
         echo $que;
@@ -79,7 +81,7 @@ function por_defecto(){
   			return $arg;
   		}
 	}
-	return false;
+	return $arg;
 }
 
 

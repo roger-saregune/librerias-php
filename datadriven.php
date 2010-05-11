@@ -1,6 +1,5 @@
 <?php 
 
-
 /**
  *
  * Librería data-driven para gestionar y editar datos
@@ -9,6 +8,7 @@
  * @author  Roger
  *
  * Correciones
+ * 2010/05/10 correciones: en consultar th con clase.
  * 2010/05/10 correciones menores
  * 2010/05/05 Correciones dd_addlib_request ¿borrador?
  *            campos html.
@@ -55,7 +55,7 @@
       	[ancho][alto]      
    filaextra
       el campo consiste en una fila extra que dibuja despues de cada fila
-   formato
+   formato / clase 
    	se usa como clase. Sino existe, se usa la primera función de tipo.
    filaextra.
    	función a la que se llamará despues de dibujar cada fila.
@@ -133,11 +133,10 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
    
     if ( is_array ( $aCampo["campos"])){
         foreach ( $aCampo["campos"] as $campo => $tipo ){
-            $aRet["campo"]= $aFila["campo"];
+            $aRet[$campo]= $aFila[$campo];
         }
         return $aRet;
     }
-
 
     $aParametros = explode  (" ", $aCampo["campo"]);
 
@@ -250,9 +249,13 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
 
 
 function ddlib_formatoCampo( $aCelda ) {
+   if ( isset( $aCelda["clase"]) ) {
+      return $aCelda["clase"];
+   }
    if ( isset( $aCelda["formato"]) ) {
       return $aCelda["formato"];
    }
+        
    $aParametros = explode(" ",$aCelda["tipo"]);		
 	return $aParametros[0];
 }
@@ -267,12 +270,13 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
    $nCont = 0;
    $lista = "";   
    foreach ( $aTabla as  $aCelda) {
-      if ( $aCelda["acceso"]===false ||  
-            isset($aCelda["filaextra"]) ) {
+      if ( $aCelda["acceso"]===false || isset($aCelda["filaextra"]) ) {
          continue;     
-      }      
-   	$lista .= "\n  <th>";
-   	   
+      }
+      
+      $clase = ddlib_formatoCampo( $aCelda );                 
+   	$lista .= "\n<th class='$clase'>";
+         	   	   
    	$cNodo = remove_querystring_var ( "?". $querystring, "order");
    	$cNodo = remove_querystring_var ( $cNodo, "orderby");   	   
       if ( isset($aCelda["order"] )){
@@ -442,8 +446,8 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
 
     // Ordenar los campos
     global $aEstado;
-    $order   = _ddlib_opcion ($aOpciones, "order"  , $aEstado["order"]);
-    $orderby = _ddlib_opcion ($aOpciones, "orderby", $aEstado["orderby"]);
+    $order   = por_defecto ($aOpciones["order"]  , $aEstado["order"], 0 );
+    $orderby = por_defecto ($aOpciones["orderby"], $aEstado["orderby"], "ASC");
     // comppletar SELECT
     if ( stripos($cSQL,"SELECT ")!== 0 ){
         foreach ( $aCampos as $dd ){
@@ -463,13 +467,14 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     }
     if ( isset($aCampos[$order]["order"]) and stripos ( $cSQL, "order by")===false ) {
         $cSQL .= sql_order( $aCampos[$order]["order"] , ( $orderby == "ASC" ? " ASC": " DESC"));
+        $leyenda = $aCampos[$order]["order"]; // @TODO ordenes de varios campos
     }
 
     // Paginación.
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
         $pags        = _ddlib_opcion ($aOpciones, "paginas", 10);
-        $regs        = _ddlib_opcion ($aOpciones, "registrosPorPagina", 20);
-        $aPaginacion = paginacion($cSQL, "leyenda", $regs, $pags, tIdiomaPorDefecto(), $querystring );
+        $regs        = _ddlib_opcion ($aOpciones, "registrosPorPagina", 20);        
+        $aPaginacion = paginacion($cSQL, $leyenda, $regs, $pags, tIdiomaLocale("eu", "paginacion") );
     } else {
         $aPaginacion = array("","",$cSQL,"");
     }

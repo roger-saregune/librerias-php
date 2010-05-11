@@ -8,6 +8,7 @@
  * @license   GPL
  * @version   26-Febrero-2010
  *
+ * 2010-05-11 + maquetador_buscador
  * 2010-04-30 + maquetador_esHome
  * 2010-02-22 c ahora la variable global aEstado, tambien guarda los modulos.
                 solo es necesario llamar a maquetador_genera().
@@ -36,10 +37,10 @@ function maquetador_script( $accion, $clave, $valor="", $adicional="media") {
     // ahora generamos cada acción, mediante una plantilla
     // para crear las etiquetas pertinentes.
         $aTemplates = array (
-            "js"     =>"<script type='text/javascript'>%s-2</script>\n",
-            "script" =>"<script src='%s'  type='text/javascript'></script>\n",
-            "style"  =>"<link rel='stylesheet' href='%s' type='text/css' media='%s'>\n",
-            "meta"   =>"<meta name='%s' content='%s'>\n" );
+            "js"     =>'<script type="text/javascript">%2$s</script>\n',
+            "script" =>'<script src="%2$s"  type="text/javascript"></script>\n',
+            "style"  =>'<link rel="stylesheet" href="%s" type="text/css" media="%s">\n',
+            "meta"   =>'<meta name="%s" content="%s">\n' );
 
         if  ( $clave=="todos") {
             foreach ( $aTemplates as $k=>$v ) {
@@ -183,6 +184,18 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
  * funciones auxiliares para maquetar enlaces y formularios 
  *   
  */
+
+function maquetador_buscador ( $controlador, $accion, $i='i') {   
+   if ( $value= limpiaRequest ($i) ){   
+      $value =  "value='$value'";
+   }
+    
+   return   "<form>" . t("Buscar") .": <input name='$i' type='text' $value>" .
+            "<input type='hidden' name='c' value='$controlador'>\n". 
+            "<input type='hidden' name='a' value='$accion'>\n".
+            "</form>";
+}
+
 
 function maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional="") {
     $mGet = array();

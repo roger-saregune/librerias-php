@@ -3,6 +3,8 @@
  * Modulo Traducción
  * 
  * @version 0.02
+ * 2010-05-11 + tFijo
+ * 2010-05-11 + tIdiomaLocale, paginación
  * 2010-05-10 + tIdiomaDefecto, tIdiomaBase, tIdiomaTabla
  * 2010-05-07 quitado ereg para sustituir por preg_match.
  * 
@@ -28,20 +30,25 @@ $TIDIOMA_BASE   = "es";
 $TIDIOMA_TABLA  = "locale";
 
 // algunos locales añadidos.
+// @TODO un sistema de carga mediante ficheros de configuraciones. 
 $TIDIOMA_LOCALE["es"]= array (
+   "paginacion" =>"Página %s de %s",
    "SI"=>"Si",
    "NO"=>"No" );
 
 $TIDIOMA_LOCALE["eu"]= array (
+   "paginacion" =>'Orria %2$s -  %1$s',  // @TODO REVISAR TRADUCCION
    "SI"=>"Bai",
    "NO"=>"Ez" );
 
+/*
+ * Definición de funciones
+ */
+
 function tIdiomaBase($idiomaBase){
-   global $TIDIOMA_BASE;
- 
+   global $TIDIOMA_BASE; 
    $TIDIOMA_BASE   = $idiomaBase;
 }
-
 
 function tIdiomaPorDefecto($idioma=false){
    global $TIDIOMA_DEFECTO; 
@@ -51,6 +58,22 @@ function tIdiomaPorDefecto($idioma=false){
    }   
    return $TIDIOMA_DEFECTO;
 }
+
+function tIdiomaLocale($idioma="",$cual=""){
+  global $TIDIOMA_LOCALE, $TIDIOMA_DEFECTO;
+  if ( $idioma=="" ){      
+      foreach ( $TIDIOMA_LOCALE as $id=>$datos ){
+         $aRet[]=$id;
+      }
+      return $aRet;
+  }
+  if ($cual=="" ){
+     $cual= $idioma;
+     $idioma= $TIDIOMA_DEFECTO;
+  }
+  return $TIDIOMA_LOCALE[$idioma][$cual];
+}
+
 
 
 function tIdiomaTabla($tb ){
@@ -89,6 +112,27 @@ function tDataUnix( $unixTime) {
    global $TIDIOMA_DEFECTO;
    return date( $unixTime, ($TIDIOMA_DEFECTO=="eu" ? "Y/m/d" : "d/m/Y"));    
 }
+
+
+function tfijo ( $string, $idioma, $args=0 ){
+	/**
+	 * @TODO Implementar el sistema completo de traducción al euskera. De momento, es una simulación para no tener que hacer cambios luego.
+    */
+   global $TIDIOMA_TABLA, $TIDIOMA_BASE; 
+    
+   $traduccion = $string; 
+   if ( $idioma != $TIDIOMA_BASE  &&     
+      $traduccion = mysql_mlookup ("SELECT $idioma FROM $TIDIOMA_TABLA WHERE $TIDIOMA_BASE='$string'") ){            	   	  
+   }  
+   
+   if ( !$args) {
+	   return $traduccion;
+   } else {
+	   return strtr( $traduccion, $args );
+   }
+
+}
+
 
 
 
