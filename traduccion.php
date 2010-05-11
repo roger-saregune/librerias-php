@@ -25,19 +25,31 @@ global $TIDIOMA_TABLA; // la tabla para las traducciones
 // valores por defecto
 $TIDIOMA_DEFECTO= "es";
 $TIDIOMA_BASE   = "es";
-$TIDIOMA_TABLA = "locale";
+$TIDIOMA_TABLA  = "locale";
+
+// algunos locales añadidos.
+$TIDIOMA_LOCALE["es"]= array (
+   "SI"=>"Si",
+   "NO"=>"No" );
+
+$TIDIOMA_LOCALE["eu"]= array (
+   "SI"=>"Bai",
+   "NO"=>"Ez" );
 
 function tIdiomaBase($idiomaBase){
    global $TIDIOMA_BASE;
-
+ 
    $TIDIOMA_BASE   = $idiomaBase;
 }
 
 
-function tIdiomaPorDefecto($idioma ){
+function tIdiomaPorDefecto($idioma=false){
    global $TIDIOMA_DEFECTO; 
          
-   $TIDIOMA_DEFECTO= $idioma;
+   if ( $idioma!==false) {
+      $TIDIOMA_DEFECTO= $idioma;             
+   }   
+   return $TIDIOMA_DEFECTO;
 }
 
 

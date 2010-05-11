@@ -9,7 +9,7 @@
  * @author  Roger
  *
  * Correciones
- * 2010/05/10 correciones menor
+ * 2010/05/10 correciones menores
  * 2010/05/05 Correciones dd_addlib_request ¿borrador?
  *            campos html.
  * 2010/04/30 Correciones repetidas 
@@ -65,6 +65,7 @@
 
 include_once ("paginacion.php");
 include_once ("imagenes.php");
+
 
 
 
@@ -129,9 +130,7 @@ function ddlib_etiqueta_html ($etiqueta, $atributos=NULL, $contenido="" ) {
  */
 
 function ddlib_obtenerCampo ( &$aCampo, $aFila){
-   global $hizkuntza;
-
-
+   
     if ( is_array ( $aCampo["campos"])){
         foreach ( $aCampo["campos"] as $campo => $tipo ){
             $aRet["campo"]= $aFila["campo"];
@@ -146,7 +145,7 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
 
         case "funcionget" :  // depreceated. Usar tcampo.
         case "tcampo" :
-            $idioma= ( isset($aParametros[2]) ? $aParametros[2] : $hizkuntza);
+            $idioma= ( isset($aParametros[2]) ? $aParametros[2] : "");
             return tCampo ( $aFila, $aParametros[1], $idioma) ;
 
         case "serialize":
@@ -159,7 +158,7 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
             } else {
                 return call_user_func($aParametros[1], $aFila ) ;
             }
-            break;
+            
         default:
             return $aFila[$aParametros[0]];
     }
@@ -174,7 +173,7 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
  */
 
 function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
-    global $hizkuntza;
+    $idioma = tIdiomaPorDefecto();
 
     $aParametros = explode( ' ', $aCampo["tipo"] );
     $formato = $aParametros[0];
@@ -208,19 +207,16 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
 
         case "checkbox":
         case "sino":
-            $campo = ( $campo ? 1 : 0);
-            $idiomas   = ( $hizkuntza=="es" ?  array("No","Si"): array("Ez", "Bai") );
-            return $idiomas[$campo] ;
+            $campo = ( $campo ? "SI": "NO");
+            return $TIDIOMA_LOCALE[$idioma][$campo] ;
 
         case "si" :
-            $campo = ( $campo ? 1 : 0);
-            $idiomas    = ( $hizkuntza=="es" ?  array("","Si"): array("", "Bai") );
-            return $idiomas[$campo];
+            $campo = ( $campo ? "SI": "");            
+            return $TIDIOMA_LOCALE[$idioma][$campo] ;
 
         case "no" :
-            $campo = ( $campo ? 1 : 0);
-            $idiomas    = ( $hizkuntza=="es" ?  array("No",""): array("Ez", "") );
-            return $idiomas[$campo];
+            $campo = ( $campo ? "" : "NO");        
+            return $TIDIOMA_LOCALE[$idioma][$campo] ;
 
         case "funcioncampo" :
             return call_user_func( $aParametros[1], $campo );
@@ -417,7 +413,6 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
      orderby  $aEstado["orderby"]
      
    */
-    global $hizkuntza;
 
     // titulo
     $cResul  = "";
@@ -474,7 +469,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
         $pags        = _ddlib_opcion ($aOpciones, "paginas", 10);
         $regs        = _ddlib_opcion ($aOpciones, "registrosPorPagina", 20);
-        $aPaginacion = paginacion($cSQL, "leyenda", $regs, $pags, $hizkuntza, $querystring );
+        $aPaginacion = paginacion($cSQL, "leyenda", $regs, $pags, tIdiomaPorDefecto(), $querystring );
     } else {
         $aPaginacion = array("","",$cSQL,"");
     }
@@ -1176,7 +1171,7 @@ function dd1_mostrarActivo ( $nValor) {
 
 function ddlib_tablaEdicionConsulta ( $cTitulo, $aTabla,  $cSQL, $aHidden=NULL, $nMax=5 ){
    static $nId;
-   global $aEstado, $hizkuntza; 
+   global $aEstado; 
    
    $nId++;
    $cResul  = ( $cTitulo !="" ?  "<h3><span>$cTitulo</span></h3>\n" : "" );

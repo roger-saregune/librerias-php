@@ -36,6 +36,7 @@ function maquetador_script( $accion, $clave, $valor="", $adicional="media") {
     // ahora generamos cada acción, mediante una plantilla
     // para crear las etiquetas pertinentes.
         $aTemplates = array (
+            "js"     =>"<script type='text/javascript'>%s-2</script>\n",
             "script" =>"<script src='%s'  type='text/javascript'></script>\n",
             "style"  =>"<link rel='stylesheet' href='%s' type='text/css' media='%s'>\n",
             "meta"   =>"<meta name='%s' content='%s'>\n" );
