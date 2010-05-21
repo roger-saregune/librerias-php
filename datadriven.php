@@ -8,6 +8,7 @@
  * @author  Roger
  *
  * Correciones
+ * 2010/05/21 en edición se puede elegir el método, corregido htmldespues
  * 2010/05/10 correciones: en consultar th con clase.
  * 2010/05/10 correciones menores
  * 2010/05/05 Correciones dd_addlib_request ¿borrador?
@@ -585,20 +586,24 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
 
            switch ( $dd["formatolista"] ) {
                case "checkbox":
+                   // @TODO no funciona CHECKBOX
                    foreach ( $lista as $value=>$opcion ) {
-                       $selected   = ($value==$campo ? " selected='selected' ": "" );
-                       $visualizar.= "<option value='$value'$selected>$opcion</option>\n";
+                       $selected   = ($value==$campo ? " checked='checked' ": "" );
+                       $visualizar.= "<input $atributos type='checkbox' value='$value'$selected/>$opcion\n";
                    }
 
                case "radio":
+                   // @TODO no funciona RADIO
                    foreach ( $lista as $value=>$opcion ) {
                        $selected   = ($value==$campo ? " checked='checked' ": "" );
-                       $visualizar.= "<input type='radio' value='$value'$selected/>$opcion</option>\n";
+                       $visualizar.= "<input $atributo type='radio' value='$value'$selected/>$opcion\n";
                    }
 
                default:
-                   $visualizar = "<select $atributos>\n";
+                   $visualizar = "<select $atributos>\n" .
+                                  _ddlib_option_adicionales ( $dd, $campo );                                      
                    foreach ( $lista as $value=>$opcion ) {
+                       
                        $selected   = ($value==$campo ? " selected='selected' ": "" );
                        $visualizar.= "<option value='$value'$selected>$opcion</option>\n";
                    }
@@ -651,8 +656,6 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
 }
 
          
-
-
 function ddlib_edicion ( $aTabla, $cSQL="", $aOpciones  ){
 /*
 
@@ -665,7 +668,7 @@ function ddlib_edicion ( $aTabla, $cSQL="", $aOpciones  ){
        separador 
        hidden        			
        fijo 
-       htmlafter
+       htmldespues
 
        adjunto directorio
 	    imagen directorio 
@@ -702,6 +705,7 @@ function ddlib_edicion ( $aTabla, $cSQL="", $aOpciones  ){
  aOpciones
     titulo
     tituloSinHTML
+    metodo
     enviar
     hidden
     tablaID
@@ -720,9 +724,10 @@ if ( isset($aOpciones["titulo"]) ) {
 } 
 
 // Se usará mas adelante 
-$cEnviar = ( isset($aOpciones['enviar']) ? $aOpciones['enviar'] : t("enviar") );
-$cResul .= "\n<form name='editar' method='post' action='". _ddlib_script() . "'  enctype='multipart/form-data'  >\n";
-
+$cEnviar = por_defecto ( $aOpciones['enviar'], t("Enviar") );
+$cMetodo = por_defecto ( $aOpciones["metodo"], "post" );
+$cEnctype= ( $cMetodo =="post" ?  'multipart/form-data' : 'application/x-www-form-urlencoded' );
+$cResul .= "\n<form name='editar' method='$cMetodo' action='". _ddlib_script() . "'  enctype='$cEnctype'  >\n";
 
 $cHidden  = "";
 $aAfter   = array();
@@ -743,8 +748,8 @@ foreach ( $aTabla as $k=>$dd) {
 		                     $dd["value"] || $aDatos[$dd["campo"]],
 		                     $dd['campo'] ) ;	                     
 	} 
-	if ( $tipo=="htmldespues" ) {
-      $aAfter[] = substr($dd["tipo"],12);      
+	if ( $tipo=="htmldespues" ) {	   	  
+      $aAfter[] = por_defecto ($dd["funcion"], substr($dd["tipo"],12) );      
 	}
    // Buscamos campos obligatorios
    if (  $aCelda["acceso"] !== false and $aCelda["verifica"]=="no_vacio" ) {
@@ -848,7 +853,7 @@ if ( $aDatos ) {
 	// botones de Enviar y Volver. 
 	$cTabla .= "<tr><td class='botones-enviar' colspan='2'><input type='submit' value='$cEnviar' class='boton' />";
 	if ( !isset($aOpciones["volver"]) || $aOpciones["volver"] ){
-	   $cTabla .= "<a href='{" . strtr( $_SERVER["HTTP_REFERER"], array("&"=>"&amp;") ) ."' class='boton'>Volver</a>";
+	   $cTabla .= "<a href='" . strtr( $_SERVER["HTTP_REFERER"], array("&"=>"&amp;") ) ."' class='boton'>Volver</a>";
 	}
 		
 	$cTabla .= "</td></tr>\n";
@@ -861,7 +866,7 @@ $cResul .= $cTabla .
            "</form>\n";
 
 foreach ( $aAfter as $funcion) {
-   $cResul .= call_user_func($funcion,$aDatos );   
+   $cResul .= call_user_func($funcion, $aDatos );   
 }
 
 return $cResul;
@@ -981,10 +986,10 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    	switch ( strtolower($aParametros[0] )){
    		case "hidden":
    		case "info":
-   		case "html-after":
+   		case "htmldespues":
    		case "infofuncion":
    		case "separador":
-   		case "separador-tabla":
+   		case "separadortabla":
    		case "verificapassword":
    		case "readonly":
    			break;

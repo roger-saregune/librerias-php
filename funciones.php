@@ -670,14 +670,21 @@ function mysql_template( $cSQL , $cTemplate, $cNoHay="" ){
   $cRet      = "" ;
   $cTemp     = "" ; 
   $rsEmaitza = mysql_query ( $cSQL );
-
+   
   // examinamos la template para extrar la plantilla repetitiva
   if ( $hayTemplate= preg_match ( "/{%REPEAT(.*)REPEAT-END%}/Uis", $cTemplate, $aResul) ){
     $cPlantilla = $aResul[1];   
   } else {
     $cPlantilla= $cTemplate;
   }
-      
+  
+  if ( $hayWhen = stripos ( $cPlantilla, "{%WHEN" )!== false ){
+     $cPlantilla = preg_replace ("/{%WHEN (.):(.*)WHEN-END%}/Uim", 'a{%WHEN $1%:%$2WHEN-END%}', $cPlantilla );
+     echo $cPlantilla;
+     
+  }
+         
+  
   // examinamos las sumas
   if ( preg_match_all ( "/%suma([0-9])/",$cTemplate, $temp) ){
     foreach ( $temp[1] as $valor) {
@@ -730,11 +737,13 @@ function mysql_template( $cSQL , $cTemplate, $cNoHay="" ){
   }  
   
   // quitamos las condicionales (When)
-  if ( stripos ( $cRet, "{%WHEN" )!== false) {
+  if ( $hayWhen ) {
      //quitar las condicionales vacias.
-     $cRet = preg_replace ("/{%WHEN[ ]*:.*WHEN-END%}/Uim",  "", $cRet );
-     $cRet = preg_replace ("/{%WHEN[ ]*[0-]*:.*WHEN-END%}/Uim",  "", $cRet );
-     $cRet = preg_replace ("/{%WHEN (.)+:(.*)WHEN-END%}/Uim",  '$2', $cRet );
+     $cRet = preg_replace ("/{%WHEN[ ]*%:%.*WHEN-END%}/Uim",  "", $cRet );
+     $cRet = preg_replace ("/{%WHEN[ ]*[0-]*%:%.*WHEN-END%}/Uim",  "", $cRet );
+
+     //quitar los WHEN...     
+     $cRet = preg_replace ("/{%WHEN (.)+%:%(.*)WHEN-END%}/Uim",  '$2', $cRet );
   }
 
   // ahora solo quedan las traducciones
