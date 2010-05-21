@@ -8,6 +8,7 @@
  * @license   GPL
  * @version   26-Febrero-2010
  *
+ * 2010-05-19 maquetador_enlace con nuevo parámetro
  * 2010-05-11 + maquetador_buscador
  * 2010-04-30 + maquetador_esHome
  * 2010-02-22 c ahora la variable global aEstado, tambien guarda los modulos.
@@ -62,15 +63,14 @@ function maquetador_script( $accion, $clave, $valor="", $adicional="media") {
 
 
 /*
- * pre-carga los modulos
- *  
+ * pre-carga los modulos  
  */
 
 function maquetador_precarga_modulos( $path="./modulos") {
     global $aEstado;
     $nlong = mb_strlen($path)+1;
     foreach ( glob ("$path/*.php") as $modulo ) {        
-        if ( mb_substr($modulo,-9) =="_load.php") {
+        if ( mb_substr($modulo,-9) =="_load.php" )  {
             $aEstado["modulos"][mb_substr($modulo,$nlong,-9)]= false;
             include_once ( $modulo );
         } else {
@@ -111,11 +111,11 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
 
 	 // precarga de modulos
 	 if ( !is_array($aEstado) ){         
-	 	maquetador_evaluar_estado($controladorDefecto, $accionDefecto);	 
+	    maquetador_evaluar_estado($controladorDefecto, $accionDefecto);	 
 	 }
 	 
 	 if ( !isset($aEstado["modulos"]) ){
-	 	maquetador_precarga_modulos();
+	    maquetador_precarga_modulos();
 	 }
 
     // leer la plantilla
@@ -233,8 +233,8 @@ function maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional=""
  */
 
 
-function maquetador_enlace( $texto, $c, $a, $i="", $marcador="" , $adicional="") {
-    $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "' $adicional >$texto</a>";
+function maquetador_enlace( $texto, $c, $a, $i="", $marcador="" , $adicional="", $paras="") {
+    $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "$paras' $adicional >$texto</a>";
     if ( $marcador !='') {
         $cRet = cerrar_etiquetas( $marcador, $cRet);
     }

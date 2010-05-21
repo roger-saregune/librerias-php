@@ -37,7 +37,7 @@ $TIDIOMA_LOCALE["es"]= array (
    "NO"=>"No" );
 
 $TIDIOMA_LOCALE["eu"]= array (
-   "paginacion" =>'Orria %2$s -  %1$s',  // @TODO REVISAR TRADUCCION
+   "paginacion" =>'%2$s(e)tik -  %1$s.orria',  // @TODO REVISAR TRADUCCION
    "SI"=>"Bai",
    "NO"=>"Ez" );
 

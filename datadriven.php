@@ -25,49 +25,10 @@
  * 2009/04/30 Documentación
  * 2009/19/01 Correción en listafuncionCadena.
  *
- * ddlib_consulta
-   acceso: si el campo es accesible.
-   cabecera:  th
-   order: si existe para ordenar
-   
-   campo:
-      tcampo campoBase idioma      
-   	funcion nombreFuncion [campo]
-   	CAMPO como tal
-   tipo
-   	adjunto [DirectorioBase]
-   	url [directorioBase]
-   	
-		lista 
-			[lista] array 
-	   checkbox
-	   sino
-	   
-	   si
-	   no  	
-   	
-		funcion NombreFuncion ['completo']   	
-		funcionCampo NombreFuncion
-		funcionRegistro NombreFuncion  	
-   	
-   	imagen (ver irudia)    
-      irudia [DirectorioBase]. 
-      	[ancho][alto]      
-   filaextra
-      el campo consiste en una fila extra que dibuja despues de cada fila
-   formato / clase 
-   	se usa como clase. Sino existe, se usa la primera función de tipo.
-   filaextra.
-   	función a la que se llamará despues de dibujar cada fila.
-   	
-   
  */
 
 include_once ("paginacion.php");
 include_once ("imagenes.php");
-
-
-
 
 /* experimento */
 class ddlib_dd {
@@ -841,8 +802,7 @@ if ( $aDatos ) {
       // obtener el tipo de campo 		
 		$aParametros = explode  (" ", $dd["tipo"] );
 		$cTipo       = strtolower($aParametros[0]);				         
-            
-      
+                  
       switch ( $cTipo ) {        
          // casos especiales          
          case "hidden":            			
@@ -853,7 +813,7 @@ if ( $aDatos ) {
          // separador                    
          case "separadortabla":   
             if ( $ultimaTabla ){
-               $cTabla .= "\n</taddlib_editarCampoble>"; 
+               $cTabla .= "\n</table>"; 
             }
             $ultimaTabla= _ddlib_opcion ($dd, "tablaID", "tabla-$nCont");                
             $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
@@ -991,7 +951,7 @@ function dd1_verificaCampo( $aDatos ){
  * Función que construye la SQL para insertar o actualizar los datos y los guarda.
 */
 
-function ddlib_guardarDatos ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
+function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    $cError= "";
    $aRet  = "";
    $lNuevo= ($cWhere=="");
@@ -1013,9 +973,9 @@ function ddlib_guardarDatos ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
   
    // al terminar la verificación revisar los errores
    foreach ( $aEdicion as $aDatos ) {
-	if ( isset($aDatos["acceso"]) and !$aDatos["acceso"]){
+	   if ( isset($aDatos["acceso"]) and !$aDatos["acceso"]){
         	continue;      
-      	}
+      }
 
    	$aParametros = explode (" ", $aDatos["tipo"]);
    	switch ( strtolower($aParametros[0] )){
@@ -1024,6 +984,7 @@ function ddlib_guardarDatos ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    		case "html-after":
    		case "infofuncion":
    		case "separador":
+   		case "separador-tabla":
    		case "verificapassword":
    		case "readonly":
    			break;
@@ -1055,16 +1016,33 @@ function ddlib_guardarDatos ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
             break;
          
    		case "listafuncion":
-   			sql_add( $aSQL,  $aDatos["campo"], $aParametros[2]);
+   			sql_add_request( $aSQL,  $aDatos["campo"], $aParametros[2]);
    			break;
 		
    		default:
-   		   if (isset($aDatos["campos"])) {
-   		      foreach ($aDatos["campos"] as $tcamp => $tipo){
-                  sql_add ( $aSQL,  $aDatos["campo"], $tipo);   		      
+   		   
+   		   if ( isset($aDatos["campos"]) ) {
+   		      foreach ($aDatos["campos"] as $tcampo => $tipo){
+                  sql_add_request ( $aSQL,  $tcampo, $tipo);   		      
    		      }   		        		  
    		   } elseif (isset($aDatos["campo"]))  {
-   		       sql_add ( $aSQL,  $aDatos["campo"], $aParametros[0]);
+   		      // el campo puede ser de diversos tipos.
+   		      list($tipoCampo, $tcampo, $tmas) = explode (" ",$aDatos["campo"]);  
+   		      switch ( strtolower($aDatos["campo"]) ) {
+   		         case "tcampo":
+   		         case "funcionget":
+   		         case "funcion":
+   		             // estos son campos de consulta no se pueden escribir   		            
+   		             break;
+   		         
+   		         case "serialize":
+   		         case "serializa":
+   		            sql_add_request ( $aSQL,  serialize($aDatos["campo"]), $tcampo);
+   		            break;
+                  
+                  default:   		       
+      		         sql_add_request ( $aSQL,  $aDatos["campo"],$aParametros[0]);
+   		      }    
             }   		   
    		   
    	}
@@ -1074,30 +1052,27 @@ function ddlib_guardarDatos ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
 	if ( sql_esvacia($aSQL) ) {
       $lResul = true ;
 	} else {	   
-   	$lResul = mysql_query( sql_sql ( $aSQL ) );   		    	
-   }
+	   $lResul = mysql_query( sql_sql ( $aSQL ) );   		    	
+   }	   
 
 	if ( $lResul and $lPendiente ){
-	   dd_libguardarAdjuntos( $cTable, $cWhere, $aEdicion);
+	   ddlib_guardarAdjuntos( $cTabla, $cWhere, $aEdicion);
 	}
 
-   // DEBUG 
-   if  ( !$lResul )  
-   	echo "<h3>Error</h3>" . sql_sql( $aSQL ) . "<br>" . mysql_error();
-  
-   if ( !is_null($aMensajes )) {
-	   if ( $lResul ) {
-	   	echo "<div class='ondo'>". $aMensajes["ondo"] . "</div>\n";
-	  	} else {
-   		echo "<div class='gaizki'>". $aMensajes["gaizki"] . "<p>SQL:" . sql_sql($aSQL) . "</p><p>MYSQL:". mysql_error() . "</p></div>\n";
-		}
-   }
+
+   // Devolver resultado   
+   if ( $lResul) {	      
+	   	$lResul = ( $aOpciones["ok"] ?  "<div class='guardarOk'   >{$aOpciones[ok]}</div>": true ); 
+	} else {
+	  	   $lResul = ( $aOpciones["ok"] ?  "<div class='guardarError'>{$aOpciones[error]}</div>" : false );   	
+	}
+   
    return $lResul ;
 }
 
 
 
-function ddlib_guardarAdjuntos( $cTable, $cWhere, $aEdicion) {
+function ddlib_guardarAdjuntos( $cTabla, $cWhere, $aEdicion) {
 	// hacemos una seguna pasada para la imágenes, los adjuntos y demás.		
 	// preparamos la nueva ID		
 	

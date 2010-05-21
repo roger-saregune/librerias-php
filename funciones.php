@@ -7,6 +7,7 @@
   * @version 2010-04-30
   * @licence GPL
 
+  * 2010/05/19 ereg sustituido por preg_match
   * 2010/05/11 mprint tiene un 3º parametros opcional HTML=true
   * 2010/05/11 por_defecto ahora devuelve el ultimo argumento
   * 2010/05/04 recuperar funciones de fechas.
@@ -101,7 +102,7 @@ function por_defecto(){
 function fecha_formato ( $fecha, $idioma="es", $formato=""){
     switch ($idioma){
         case "es": 
-            ereg( '([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{1,4})', $fecha, $temp);
+            preg_match( '#([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{1,4})#ui', $fecha, $temp);
             $dia    = $temp[1];
             $mes  = $temp[2];
             $anno = $temp[3];
@@ -110,7 +111,7 @@ function fecha_formato ( $fecha, $idioma="es", $formato=""){
             }
             break;
         case "eu": 
-            ereg( '([0-9]{2,4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})', $fecha, $temp);
+            preg_match( '#([0-9]{2,4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})#ui', $fecha, $temp);
             $dia    = $temp[3];
             $mes  = $temp[2];
             $anno = $temp[1];
@@ -119,7 +120,7 @@ function fecha_formato ( $fecha, $idioma="es", $formato=""){
             }
             break;
         default  : 
-            ereg( '([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{1,4})', $fecha, $temp);
+            preg_match( '#([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{1,4})#ui', $fecha, $temp);
             $dia    = $temp[2];
             $mes  = $temp[1];
             $anno = $temp[3];
@@ -143,7 +144,7 @@ function fecha_formato ( $fecha, $idioma="es", $formato=""){
 
 function fecha_mysql_php($fecha, $formato='Y/m/j'){
    $tempFecha = str_replace ( '/', '-', $fecha);
-   ereg( '([0-9]{2,4})-([0-9]{1,2})-([0-9]{1,2})', $tempFecha, $mifecha);
+   preg_match( '#([0-9]{2,4})-([0-9]{1,2})-([0-9]{1,2})#ui', $tempFecha, $mifecha);
    /* TODO añadir mas marcadores */
    return strtr ( $formato,
        array (
@@ -163,7 +164,7 @@ function fecha_php_mysql($fecha, $formato='y/m/d'){
    $fecha   = str_replace ( '-', '/', $fecha);
 
    // intentamos una conversión simple entre MM/DD/AAAA a AAAA/MM/DD  
-   if ( ereg( "([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})", $fecha, $regs ) ) {
+   if ( preg_match( "#([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})#ui", $fecha, $regs ) ) {
       if ( $regs[2] > 12 ) {
          $temp    = $regs[2];
          $regs[2] = $regs[1];
@@ -173,7 +174,7 @@ function fecha_php_mysql($fecha, $formato='y/m/d'){
    }
   
           
-   ereg( '([0-9]{1,4})/([0-9]{1,2})/([0-9]{1,2})', $fecha, $mifecha);
+   preg_match( '#([0-9]{1,4})/([0-9]{1,2})/([0-9]{1,2})#ui', $fecha, $mifecha);
    $cRet = strtr( $formato, array (
        '-'  => '/',
        'd' =>$mifecha[3],
@@ -193,7 +194,7 @@ function fecha_php_mysql($fecha, $formato='y/m/d'){
 
 // Pasa del formato DD/MM/AAAA al formato AAAA-MM-DD 00:00:0
 function mmktime($fecha){
-	if ( ereg( '([0-9]{1,4})[/-]([0-9]{1,4})[/-]([0-9]{1,4})', $fecha, $afecha) ){
+	if ( preg_match( '#([0-9]{1,4})[/-]([0-9]{1,4})[/-]([0-9]{1,4})#ui', $fecha, $afecha) ){
 		return mktime (0,0,0,$afecha[2],$afecha[3],$afecha[1] );
 	}
 	return '';
@@ -201,7 +202,7 @@ function mmktime($fecha){
 
 
 function formatoFechaToDateTimeMySql($fecha){
-	if ( ereg( '([0-9]{1,4})/([0-9]{1,4})/([0-9]{1,4})', $fecha, $afecha) ){
+	if ( preg_match( '#([0-9]{1,4})/([0-9]{1,4})/([0-9]{1,4})#ui', $fecha, $afecha) ){
 		return ( 	$afecha[3] . '-' . $afecha[2] . '-' . $afecha[1] . ' 00:00:00' );
 	}
 	return '';
@@ -210,7 +211,7 @@ function formatoFechaToDateTimeMySql($fecha){
 
 // Pasa del formato DD/MM/AA o DD/MM/AAAA al formato AAAA-MM-DD
 function formatoFechaToDateMySql($fecha){
-	if ( ereg( '([0-9]{1,2})/([0-9]{1,2})/([0-9]{1,4})', $fecha, $afecha) ){
+	if ( preg_match( '#([0-9]{1,2})/([0-9]{1,2})/([0-9]{1,4})#ui', $fecha, $afecha) ){
 		return  (strlen($afecha[3])<3?'20':"") . $afecha[3] . '-' . $afecha[2] . '-' . $afecha[1] ;
 	}
 	return '';
@@ -219,7 +220,7 @@ function formatoFechaToDateMySql($fecha){
 
 // Pasa del formato AAAA-MM-DD a DD/MM/AA
 function formatoMySqlToFecha($fecha){
-	if ( ereg( '([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})', $fecha, $afecha) ){
+	if ( preg_match( '#([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})#ui', $fecha, $afecha) ){
 		return  $afecha[3] . '-' . $afecha[2] . '-' .  substr($afecha[1] ,2,2);
 	}
 	return '';
