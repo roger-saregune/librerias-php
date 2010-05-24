@@ -3,6 +3,7 @@
  * Modulo Traducción
  * 
  * @version 0.02
+ * 2010-05-23 correciones
  * 2010-05-11 + tFijo
  * 2010-05-11 + tIdiomaLocale, paginación
  * 2010-05-10 + tIdiomaDefecto, tIdiomaBase, tIdiomaTabla
@@ -59,17 +60,14 @@ function tIdiomaPorDefecto($idioma=false){
    return $TIDIOMA_DEFECTO;
 }
 
-function tIdiomaLocale($idioma="",$cual=""){
+function tIdiomaLocale($cual="", $idioma=""){
   global $TIDIOMA_LOCALE, $TIDIOMA_DEFECTO;
-  if ( $idioma=="" ){      
-      foreach ( $TIDIOMA_LOCALE as $id=>$datos ){
-         $aRet[]=$id;
-      }
-      return $aRet;
+  
+  if ( $idioma=="" ){
+  		$idioma=$TIDIOMA_DEFECTO;
   }
-  if ($cual=="" ){
-     $cual= $idioma;
-     $idioma= $TIDIOMA_DEFECTO;
+  if ( $cual=="" ){
+ 		return $TIDIOMA_LOCALE;
   }
   return $TIDIOMA_LOCALE[$idioma][$cual];
 }

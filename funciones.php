@@ -7,6 +7,7 @@
   * @version 2010-04-30
   * @licence GPL
 
+  * 2010/05/21 correciones en mysql_template : /uims
   * 2010/05/19 ereg sustituido por preg_match
   * 2010/05/11 mprint tiene un 3º parametros opcional HTML=true
   * 2010/05/11 por_defecto ahora devuelve el ultimo argumento
@@ -679,9 +680,7 @@ function mysql_template( $cSQL , $cTemplate, $cNoHay="" ){
   }
   
   if ( $hayWhen = stripos ( $cPlantilla, "{%WHEN" )!== false ){
-     $cPlantilla = preg_replace ("/{%WHEN (.):(.*)WHEN-END%}/Uim", 'a{%WHEN $1%:%$2WHEN-END%}', $cPlantilla );
-     echo $cPlantilla;
-     
+     $cPlantilla = preg_replace ("/{%WHEN ([^:]*):(.*)WHEN-END%}/Uim", '{%WHEN $1%:%$2WHEN-END%}', $cPlantilla );         
   }
          
   
@@ -739,11 +738,12 @@ function mysql_template( $cSQL , $cTemplate, $cNoHay="" ){
   // quitamos las condicionales (When)
   if ( $hayWhen ) {
      //quitar las condicionales vacias.
-     $cRet = preg_replace ("/{%WHEN[ ]*%:%.*WHEN-END%}/Uim",  "", $cRet );
-     $cRet = preg_replace ("/{%WHEN[ ]*[0-]*%:%.*WHEN-END%}/Uim",  "", $cRet );
+     //$cRet = preg_replace ("/{%WHEN[ ]*%:%.*WHEN-END%}/Uims",  "", $cRet );
+     $cRet = preg_replace ("#{%WHEN [-\ 0]*%:%.*WHEN-END%}#Uims",  "", $cRet );
 
-     //quitar los WHEN...     
-     $cRet = preg_replace ("/{%WHEN (.)+%:%(.*)WHEN-END%}/Uim",  '$2', $cRet );
+     //quitar los WHEN...  
+     // este filtro no funciona si no se han eliminado todas las condificones vaciones.   
+     $cRet = preg_replace ("/{%WHEN (.)+%:%(.*)WHEN-END%}/Uims",  '$2', $cRet );
   }
 
   // ahora solo quedan las traducciones
