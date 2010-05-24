@@ -1,0 +1,87 @@
+
+MAQUETADOR
+==========
+Todos las marcas se delimitan con <% ... %> (mismo marca que Smarty y ASP )
+
+
+Las marcas son:
+
+<%include fichero %>
+ej:   <%include marca.tpl %>
+Para incluir un fichero.
+
+<%controlador(accion[,id])%> 
+ej: <%noticias(masVistas) %>
+    <%texto(ver,1)%>
+    <%info(titulo)%>
+Se sustituye por la llamada al controlador con la acción e id
+
+Esta etiqueta se puede hacer condicional:
+<%HOME ... %>
+<%HOME textos(bienvenida)%>
+<%HOME enlaces(blogroll)%>
+Solo se muestra si estamos en la home
+
+<%ONCE ....%>
+<%ONCE ayuda(mostrar)%>
+Solo se muestra una vez.
+
+<%WHEN CONTROLADOR:x [ACCION:]y%>
+<%WHEN CONTROLADOR:noticias noticias(masleido)%>
+<%WHEN CONTROLADOR:noticias ACCION:editar noticias(ayudaEdicion)%>
+Solo se muestra si el controlador del contenido y la acción, coinciden. 
+
+<%WHEN condicion PUT html%>
+<%WHEN condicion PHP php%>
+Si la condición se cumple, se imprime el código HTML o se llama a la función PHP.
+
+
+FUNCIONES BÁSICAS DEL MAQUETADOR
+
+maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false) {
+Genera la página usando $plantilla, y usando para el contenido el controlador por defecto y la
+acción, si se indican.
+Esta función llama, si es necesario, a maquetador_evaluar_estado, y maquetador_precarga_modulos
+
+maquetador_evaluar_estado( $controlador=false, $accion=false)
+Evalua el estado, esto es, que contenido se tiene que generar: si estamos o no en la home, si tenemos
+controlador o acción o se usan los de por defecto.
+
+maquetador_precarga_modulos( $path="./modulos") {
+Precarga los modulos. Aquellos terminados con load.php son cargados siempre, y el resto a demanda (solo si
+el maquetador tiene que generar contenido del modulo ) 
+
+
+maquetador_script( $accion, $clave, $valor="", $adicional="media") {
+Utilidad para generar guardar y generar contenido especial. Por ejemplo las metas,y los javascript, hay que cargarlas al inicio de la pagina.
+La idea, que puedas anotarlo usando esta función, y despues de genera toda la página, se pueden insertar esta anotaciones.
+Por ejemplo
+
+.. html de un modulo........
+maquetador_script ("añadir", "meta", "keywords", "lorem ipsum");
+
+.. index.tpl...
+<head>
+<meta ...
+<%maquetador(metas)%>  // se generan, si las hay los meta
+<%maquetador(script)%> // se generan, si los hay los javascript.
+
+ 
+
+
+FUNCIONES PARA AYUDAR A GENERA WEB
+function maquetador_enlace( $texto, $c, $a, $i="", $marcador="" , $adicional="", $paras="") {
+function maquetador_form( $c, $a, $i="") {
+function maquetador_array( $c, $a, $i="" ) {
+function maquetador_esHome(){
+function maquetador_buscador ( $controlador, $accion, $i='i') {   
+function maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional="") {
+
+
+FUNCIONES AUXILIARES DEL PROPIO MAQUETADOR.
+ maquetador_extraer_marcas( $cadena ) {
+ maquetador_extrae_modulo( $cadena ) {
+ maquetador_lee_fichero ( $path, $cual ) {
+ maquetador_insertar_include ( $plantilla ) {
+ maquetador_evalua( $condicion) {
+ maquetador_carga_modulos() Carga todos los modulos.. 

@@ -1,0 +1,133 @@
+Documentacion del modulo datadriven
+
+
+
+defición de aTabla
+        
+    acceso
+       Booleano.Si se puede acceder o no al campo
+
+    campo
+       Puede ser        
+          funcionget ( dp -> tcampo )
+          tcampo campoBase idioma
+          
+          serialize (dp ->serializa )
+          serializa
+                      
+      	 funcion nombreFuncion [campo]
+          se llama a la función pasadole el valor de campo, o todo el registro si no se especifica.   	 
+      	 
+      	 o el nombre del campo como tal.
+    
+    campos
+       nombre de los campos. Es un array con nombreCampo=>tipoCampo   
+    
+    cabecera
+       cabecera o etiqueta label.
+       
+    defecto
+       Valor por defecto. Al añadir un nuevo registro el campo tomará este valor.
+
+    verifica
+    
+	 adicional
+	    pequeño texto adicional
+
+	 atributos
+	    atributos html adicional
+
+	 id
+	    id (opcional ya que se calcula) 
+
+	 clase
+	    id (opcional ya que se calcula)
+
+	 order
+	    si el campo se puede ordenar, la expresion (pueden ser varios campos separados con coma).
+	    Solo se usa en consultas        
+        
+    formato / clase 
+   	se usa como clase en las consultas
+    
+    filaextra.
+   	fila adicional que se dibuja en las consultas    
+    
+    
+    tipo
+       Indica el tipo de campo. Puede ser
+       
+       -separadortabla
+       Separa la tabla   
+       
+       -separador 
+       Fila de separador (el texto es [cabecera])
+       
+       hidden
+       Para añadir un hidden (value es [value] campo.         			
+       
+       fijo
+       para añadir un campo fijo (no se visualiza) 
+
+       html-after
+       funciones que se llaman al terminar.
+
+   	 url directorio
+       adjunto directorio
+       fichero adjuntos
+	   
+	    irudia directorio  	[ancho][alto] 
+	    imagen directorio  	[ancho][alto]
+	    
+		 funcion NombreFuncion ['completo']   	
+		 funcionCampo NombreFuncion
+		 funcionRegistro NombreFuncion  		     
+	  	 	     					
+		 lista   ->[lista]							
+		 listasql SQL
+		 listafuncion funcion_a_llamar						
+						$formatolista			
+       
+       checkbox          
+	    sino  (para consulta)	   
+	    si (para consulta)
+	    no (para consulta) 				
+      
+       info
+		 campo informativo (no editable) que se muestra (no se salva)      
+      
+       infofijo información
+       campo no editable con información fija 
+       
+       infofuncion funcion
+       campo no editable con información obtenida por la función.
+                                					 		 
+       htmlfijo HTML-bruto
+       
+       htmlfuncion funcion                				
+									
+		 nuevopassword size max 
+		
+		 textos cols=40 fila=8				
+		 cadena size=40 max=(size or 40)     				
+		
+		 -->sino un input=text					   			
+	 				       
+ cSQL
+    si existe, es una modificación
+    sino una inserción (registro nuevo) 
+ 
+ aOpciones
+    titulo
+    tituloSinHTML
+    enviar
+    hidden
+       array con hiddens
+    tablaID
+    
+    tablaClase
+
+    prefijoId (campo)
+      Opcional.    
+    
+    volver
