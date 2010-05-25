@@ -6,9 +6,9 @@
  * Cambiada para gestión con el maquetador
  * @version 2010-04-30
  * @author  Roger
- *
+ * 
  * Correcciones
- * 2010/05/25 corregido añadir
+ * 2010/05/25 corregido añadir, ordenactual en consultas
  * 2010/05/21 en edición se puede elegir el método, corregido htmldespues, checkboxes.
               boton volver oculto por defecto.
  * 2010/05/10 correciones: en consultar th con clase.
@@ -226,11 +226,9 @@ function ddlib_formatoCampo( $aCelda ) {
 }
 
 
-function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPaginacion ){
-   global $aEstado;
-   $order   = $aEstado["order"];
-   $orderBy = $aEstado["orderby"];
-
+function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPaginacion, $order, $orderBy ){
+   
+ 
    /* Dibujar las cabecera de la tabla */
    $nCont = 0;
    $lista = "";   
@@ -239,8 +237,9 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
          continue;     
       }
       
-      $clase = ddlib_formatoCampo( $aCelda );                 
-   	$lista .= "\n<th class='$clase'>";
+      $clase  = ddlib_formatoCampo( $aCelda );
+      $orden  = ( $order == $nCont ? " ordenactual" : "");                  
+   	$lista .= "\n<th class='$clase$orden'>";
          	   	   
    	$cNodo = remove_querystring_var ( "?". $querystring, "order");
    	$cNodo = remove_querystring_var ( $cNodo, "orderby");   	   
@@ -456,7 +455,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     }
 
     $cResul .="\n<table $atributosTabla>\n";
-    $cResul .= _ddlib_consulta_cabecera ( $aCampos, $querystring, $lHayOpciones, $aPaginacion[3]);
+    $cResul .= _ddlib_consulta_cabecera ( $aCampos, $querystring, $lHayOpciones, $aPaginacion[3], $order, $orderby);
     $cResul .= _ddlib_consulta_cuerpo   ( $aCampos, $aPaginacion[2], $aOpciones );
     $cResul .="\n</table>\n";
     return $cResul ;
