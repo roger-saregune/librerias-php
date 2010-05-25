@@ -1,7 +1,23 @@
 
 MAQUETADOR
 ==========
-Todos las marcas se delimitan con <% ... %> (mismo marca que Smarty y ASP )
+El maquetador genera una pagina web tomando como base una fichero plantilla, normalmente de extensión tpl.
+Estos ficheros son de texto (no se evaluan como PHP) e incluyen ciertas marcas para insertar contenido.
+Todas estas marcas se delimitan con <% ... %> (mismo marca que Smarty y ASP )
+
+La loǵica del maquetador es simple: todos los contenidos son generados a partir de un modulo (el programa que responde dicho contenido),
+una acción y una id que son pasados al modulo. Por ejemplo para editar los datos del artículo nº 5, el modulo debería ser
+articulos (el fichero se llamaría articulos.php), la acción podría ser editar, y la id 5. Para ver los dos ultimos banner
+el modulo seria banners (fichero banner.php), la acción "ultimos",y en esta caso la id no sería necesaria. En la plantilla
+aparecería:
+<%banner(ultimos)%>
+<%articulos(top)%>
+El contenido solicitado por el usario se genera en etiqueta: <%contenido%>. Para saber que ha solicitado, se examina $_REQUEST,
+valor (c-controlador/modulo, a-acción, i-id).
+
+
+
+
 
 
 Las marcas son:

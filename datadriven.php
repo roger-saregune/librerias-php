@@ -7,9 +7,9 @@
  * @version 2010-04-30
  * @author  Roger
  *
- * Correcciones
- * 2010/05/21 en edición se puede elegir el método, corregido htmldespues, checkboxes.
-              boton volver oculto por defecto.
+ * Correciones
+ * 2010/05/25 corregido añadir registros
+ * 2010/05/21 en edición se puede elegir el método, corregido htmldespues
  * 2010/05/10 correciones: en consultar th con clase.
  * 2010/05/10 correciones menores
  * 2010/05/05 Correciones dd_addlib_request ¿borrador?
@@ -167,7 +167,6 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
                 return   $campo;
             }
 
-	
         case "checkbox":
         case "sino":
             $campo = ( $campo ? "SI": "NO");
@@ -278,7 +277,7 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
    $rsConsulta= mysql_query( $cSQL);
    
    $lHayOpciones = isset( $aOpciones["opciones"]);   
-   $separadorOpciones = por_defecto ($aOpciones["opcionesSeparador"],"|");
+   $separadorOpciones = _ddlib_opcion ( $aOpciones, "opcionesSeparador","|");
    // calcular las funciones despues
    $after= false;
 	foreach ( $aTabla as $aCelda ){
@@ -402,7 +401,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     }
 
     // queryString
-    $querystring= por_defecto ($aOpciones["querystring"], $_SERVER["QUERY_STRING"]);
+    $querystring= _ddlib_opcion ($aOpciones, "querystring", $_SERVER["QUERY_STRING"]);
 
     // Calcular cabecera las cabecera de la tabla
     $lHayOpciones = isset($aOpciones["opciones"]);
@@ -426,24 +425,19 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
                 $campos= array_merge($campos,$dd["campos"]);
             }
         }
-        // TODO REVISAR.
-        $cSQL = "SELECT " . implode(",",$campos) . (stripos($cSQL,"FROM ")===0 ?  $cSQL : " FROM $cSQL");        
+        $cSQL = "SELECT " . implode(",",$campos) . (stripos($cSQL,"FROM ")===0 ?  $cSQL : " FROM $cSQL");
+        echo $cSQL;
     }
-    if ( stripos ( $cSQL, "order by") ){// NO PUEDE SER cero
-    	  //if (preg_match ("#order by (.*)( LIMIT)?#uim", $cSQL, $aTemp )) Esta seria la buena  		
-  		  if (preg_match ("#order by ([^ ,]*)#uim", $cSQL, $aTemp )){
-  		     $leyenda= $aTemp[1] ;
-  		  }  
-    } elseif ( isset($aCampos[$order]["order"])) {
+    if ( isset($aCampos[$order]["order"]) and stripos ( $cSQL, "order by")===false ) {
         $cSQL .= sql_order( $aCampos[$order]["order"] , ( $orderby == "ASC" ? " ASC": " DESC"));
         $leyenda = $aCampos[$order]["order"]; // @TODO ordenes de varios campos
     }
 
     // Paginación.
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
-        $pags        = por_defecto ($aOpciones["paginas"], 10);
-        $regs        = por_defecto ($aOpciones ["registrosPorPagina"], 20);        
-        $aPaginacion = paginacion($cSQL, $leyenda, $regs, $pags, tIdiomaLocale("paginacion") );
+        $pags        = _ddlib_opcion ($aOpciones, "paginas", 10);
+        $regs        = _ddlib_opcion ($aOpciones, "registrosPorPagina", 20);        
+        $aPaginacion = paginacion($cSQL, $leyenda, $regs, $pags, tIdiomaLocale("eu", "paginacion") );
     } else {
         $aPaginacion = array("","",$cSQL,"");
     }
@@ -621,24 +615,8 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
        case "checkbox":
            $checked     = ( $campo ? " checked='checked' ": "") ;
            return "<input type='checkbox' $atributos $checked value='1' />";
-		 
-		 case "checkboxes":
-		     if ( isset ( $dd["campos"]) && isset( $dd["etiquetas"] ) ){		     
-		     		$nCont=1;
-		     		foreach ( $dd["campos"] as $tcampo=>$tipo ){
-		     			$atributos = ( $aDatos[$tcampo] ? " checked='checked' ": "") ;
-		     			$atributos .= " name='$tcampo' id='$id-$nCont' {$dd[atributos]} value='1'";
-		     			$cRet .= "<input type='checkbox' $atributos> ";
-		     			$cRet .= "<label for='$id-$nCont'>".  $dd["etiquetas"][$tcampo]. "</label> \n";
-		     			$nCont++;
-		     		}
-		     		return $cRet;		     				     
-		     }		     
-                      
-           return "";
 
-
-       // funciones informativas       
+       // funciones informativas
        case "infofijo":
        case "infofuncion":
            $campo = ($tipo=="infofijo" ? substr( $dd["tipo"],9 ) : call_user_func($aParametros[1], $aDatos));
@@ -650,7 +628,6 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
        case "htmlfijo":
            return substr ($dd["tipo"],9);
 
-		 case "html":
        case "htmlfuncion":
            return call_user_func ( $aParametros[1] , $aDatos);
 
@@ -701,9 +678,7 @@ function ddlib_edicion ( $aTabla, $cSQL="", $aOpciones  ){
 		 listasql SQL
 		 listafuncion funcion_a_llamar						
 						$formatolista			
-       checkbox	
-       checkboxes  
-       		utiliza el campo etiquetas		
+       checkbox			
       
        infofijo información
        infofuncion funcion 
@@ -866,15 +841,9 @@ if ( $aDatos ) {
       				            					
       			$obligatorio = ( $dd["verifica"]=="no_vacio" ? " class='obligatorio'" : "" );
       			$adicional   = ( $dd["adicional"] ? "<span class='adicional'>{$dd[adicional]}</span>" : "");
-
-
-					if ( isset( $dd["campos"])  ){ // los campos multiples no tienen etiqueta
-						$cTabla    .= "\n <tr><th $obligatorio>{$dd[cabecera]}</th>";
-					}else {      			   			 
-               	$cTabla    .= "\n <tr><th><label for='$prefijoID$nCont' $obligatorio>{$dd[cabecera]}</label></th>";
-               }	
-      			
-      			$cTabla    .= "\n     <td>$visualizar $adicional</td></tr>";
+      			   			 
+               $cTabla    .= "\n <tr><th><label for='$prefijoID$nCont' $obligatorio>{$dd[cabecera]}</label></th>".
+      			              "\n     <td>$visualizar $adicional</td></tr>";
              
            }                            		   
 		}
@@ -884,7 +853,7 @@ if ( $aDatos ) {
 	
 	// botones de Enviar y Volver. 
 	$cTabla .= "<tr><td class='botones-enviar' colspan='2'><input type='submit' value='$cEnviar' class='boton' />";
-	if ( $aOpciones["volver"]===true ){
+	if ( !isset($aOpciones["volver"]) || $aOpciones["volver"] ){
 	   $cTabla .= "<a href='" . strtr( $_SERVER["HTTP_REFERER"], array("&"=>"&amp;") ) ."' class='boton'>Volver</a>";
 	}
 		
@@ -991,7 +960,7 @@ function dd1_verificaCampo( $aDatos ){
 function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    $cError= "";
    $aRet  = "";
-   $lNuevo= ($cWhere=="");
+   $cNuevo= ($cWhere=="" ? "INSERT" : "UPDATE");
    
    //  Primero verificamos las condiciones de cada campo 
    foreach ( $aEdicion as $aDatos ) {	      
@@ -1003,10 +972,10 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
       if ( isset( $aOpciones["errorverificacion"])  ){
 			$cError =  $aOpciones["errorverificacion"] . $cError;     
       }
-      return mensajes ( $cError, "error-" . ($lNuevo ? "añadir" : "guardar") ) ;	   
+      return mensajes ( $cError, "error-" . ($cNuevo ? "añadir" : "guardar") ) ;	   
    }
    
-   $aSQL = sql_crear( $lNuevo, $cTabla, $cWhere );
+   $aSQL = sql_crear( $cNuevo, $cTabla, $cWhere );
   
    // al terminar la verificación revisar los errores
    foreach ( $aEdicion as $aDatos ) {
@@ -1058,8 +1027,8 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
 		
    		default:
    		   
-   		   if ( isset($aDatos["campos"]) ) {   		      
-   		      foreach ($aDatos["campos"] as $tcampo => $tipo){   		         
+   		   if ( isset($aDatos["campos"]) ) {
+   		      foreach ($aDatos["campos"] as $tcampo => $tipo){
                   sql_add_request ( $aSQL,  $tcampo, $tipo);   		      
    		      }   		        		  
    		   } elseif (isset($aDatos["campo"]))  {
