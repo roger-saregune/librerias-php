@@ -3,6 +3,7 @@
  * Modulo Traducción
  * 
  * @version 0.02
+ * 2110-05-26 Correciones tSQLCampo alias
  * 2010-05-23 correciones
  * 2010-05-11 + tFijo
  * 2010-05-11 + tIdiomaLocale, paginación
@@ -164,7 +165,7 @@ function t ( $string, $args=0 ){
  */
 
 function tSqlCampo( $campo, $alias=""){
-  return tifsql( $campo, $alias="");
+  return tifsql( $campo, $alias);
 }
 
 function tSqlCampos( ){
