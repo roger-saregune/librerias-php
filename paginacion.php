@@ -4,8 +4,9 @@
  * Paginación de resultados SQL. 
  * funciona solo sobre Mysql.
  *
- * @version 2010/05/11 
+ * @version 2010/05/26 
  *
+ * 2010/05/26 paginaActual con $_REQUEST
  * 2010/05/11 funciona el campo leyenda.
  *             suprimidas las funciones referer, calculaAlt, mEnlaceOrden
  *	
@@ -32,7 +33,7 @@ function _paginacion_base(){
 function paginacion( $cSql, $leyenda, $tamPagina=10, $maxIndex=10, $leyendaPaginas="Página %s de %s" ){
 	/* devuelve un array con ( n reg, n paginas, cSQL limitada, navegación ) */
 
-	$paginaActual= mRequest("PaginaActual");
+	$paginaActual= $_REQUEST["PaginaActual"];
 	if ($paginaActual=="") {
 		$paginaActual=1;	
 	}
