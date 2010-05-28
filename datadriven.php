@@ -4,10 +4,11 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2010-04-30
+ * @version 2010-05-28
  * @author  Roger
  * 
  * Correcciones
+ * 2010/05/28 Corregido: primer separador genera la tabla
  * 2010/05/25 corregido añadir, ordenactual en consultas
  * 2010/05/21 en edición se puede elegir el método, corregido htmldespues, checkboxes.
               boton volver oculto por defecto.
@@ -850,6 +851,11 @@ if ( $aDatos ) {
             $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
 			
 			case "separador":
+            if ( !$ultimaTabla ){
+                 $ultimaTabla= _ddlib_opcion ($dd, "tablaID", "tabla-$nCont");                
+                 $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
+            }			
+			
 			   $atributos   = _ddlib_atributos   ( $dd, "$prefijoID$nCont"  ) ;
 			   $cTabla .= "\n<tr class='separador'>\n";
             $cTabla .= "<th colspan='2' $atributos>{$dd[cabecera]}</th></tr>\n";	
@@ -1035,7 +1041,7 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
             if ( $_REQUEST[ $aDatos["campo"]."_EZABATU"]=='1'){
                sql_add($aSQL,  $aDatos["campo"], "", "cadena");               
             } else {   		
-				  $lPendiente = true;
+				   $lPendiente = true;
 				}  
    			break;
 		
@@ -1088,7 +1094,7 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    // si hemos recogido campos, salvamos (puede ser un caso de solo imágenes )
 	if ( sql_esvacia($aSQL) ) {
       $lResul = true ;
-	} else {	   
+	} else {	   	   
 	   $lResul = mysql_query( sql_sql ( $aSQL ) );   		    	
    }	   
 

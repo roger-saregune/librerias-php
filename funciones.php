@@ -104,7 +104,7 @@ function fecha_formato ( $fecha, $idioma="es", $formato=""){
     switch ($idioma){
         case "es": 
             preg_match( '#([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{1,4})#ui', $fecha, $temp);
-            $dia    = $temp[1];
+            $dia  = $temp[1];
             $mes  = $temp[2];
             $anno = $temp[3];
             if ( !$formato ) {

@@ -3,13 +3,13 @@
 /**
  * funciones SQL para construir clausulas.
  *
- * @version: 13-Mayo-2010
- *   13/05/2010 sql_add con cadena por defecto
- *   13/02/2008 ampliado sql_junta
- *   30/06/2006 Añadido sql_esvacia
- *   03/10/2005 Añadidas funciones para crear sentencias SQL.
+ * @version: 2010/05/28
+*    2010/05/28 sql_codifica ya no se corrigen las fechas. Deben estar en YYYY/mm/dd
+ *   2010/05/13 sql_add con cadena por defecto
+ *   2008/02/13 ampliado sql_junta
+ *   2006/06/30 AÃ±adido sql_esvacia
+ *   2005/03/10 AÃ±adidas funciones para crear sentencias SQL.
  *           sql_crear, sql_add, slq_codifica, sql_sql y sql_where
- *    25/05/2006 Servidor 
  *
  */
 
@@ -57,7 +57,6 @@ return  $sql_parentesis;
 
 
 function sql_codifica ( $cValor, $cTipo ){
-global $hizkuntza; // @TODO
 // calcular el nuevo tipo
 
 switch ( strtolower ( $cTipo )){
@@ -71,7 +70,7 @@ switch ( strtolower ( $cTipo )){
 	case "fecha" :
 	case "fechahoy":
 		if ($cValor!=''){
-		    return "'" . fecha_formato( $cValor,$hizkuntza)  . "'";            
+		    return "'$cValor'";            
 		}
 		return ($cTipo=="fecha" ? "NULL" : date("'Y/m/d 00:00:00'") );
 		break;
