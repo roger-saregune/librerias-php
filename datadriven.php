@@ -8,6 +8,8 @@
  * @author  Roger
  * 
  * Correcciones
+ * 2010/06/02 Corregido: opcionId, opcionID o primer campo
+ * 2010/06/02 Corregido: tablaID de edicion
  * 2010/05/28 Corregido: primer separador genera la tabla
  * 2010/05/25 corregido añadir, ordenactual en consultas
  * 2010/05/21 en edición se puede elegir el método, corregido htmldespues, checkboxes.
@@ -272,14 +274,8 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
 }
 
 
-function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
-
-   $cResul .="\n<tbody>";
-   $lPar = true;
-   $rsConsulta= mysql_query( $cSQL);
+function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){  
    
-   $lHayOpciones = isset( $aOpciones["opciones"]);   
-   $separadorOpciones = por_defecto ($aOpciones["opcionesSeparador"],"|");
    // calcular las funciones despues
    $after= false;
 	foreach ( $aTabla as $aCelda ){
@@ -288,7 +284,16 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
 		}
 	}  
    
-   while ( $fila = mysql_fetch_array( $rsConsulta) ) {
+
+  if ( $lHayOpciones = isset( $aOpciones["opciones"])){    
+     $opcionID          = por_defecto ( $aOpciones["opcionId"], $aOpciones["opcionID"], $aTabla[0]["campo"] );
+     $separadorOpciones = por_defecto ( $aOpciones["opcionesSeparador"],"|");
+  }    
+    
+  $cResul .="\n<tbody>"; 
+  $lPar = true;
+  $rsConsulta= mysql_query( $cSQL);
+  while ( $fila = mysql_fetch_array( $rsConsulta) ) {
 	   $cResul .=  "\n <tr" . ($lPar ? "": " class='impar' " ). ">";
 	
 	   // dibujamos cada celda según su tipo //
@@ -316,17 +321,10 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
 		
 	   /* ahorita dibujamos las opciones */
 	   if ( $lHayOpciones ) {
-   	   $cResul .="<td class='opciones'>";
-   	   if ( is_array($aOpciones["opciones"]) ) {
-   	      $separador="";
-         	foreach ( $aOpciones["opciones"] as $aOpcion ){
-         		$cResul .= $separador . str_ireplace( "%id%", $fila[$aOpciones["opcionesId"]], $aOpcion);
-         		$separador = $separadorOpciones;  	      	      	      
-        		}
-        	} else {
-        		$cResul .= str_ireplace( "%id%", $fila[$aOpciones["opcionesId"]], $aOpciones["opciones"]);
-        	}
-	      $cResul .= "</td>";
+   	   $cResul .="<td class='opciones'>".
+   	          	 str_ireplace( "%id%", $fila[$opcionID], 
+        	                is_array ( $aOpciones["opciones"]) ? implode ( $separadorOpciones,$aOpciones["opciones"])   :$aOpciones["opciones"]).
+         	        "</td>";
 	   }
    	$cResul .= "</tr>\n";
 	   $lPar = ! $lPar;
@@ -344,8 +342,8 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
 }
 
 /**
- * Consulta de varios registros 
- * @param $aTable    definiciones DD
+ * Consulta de varios registros en forma tabular 
+ * @param $aCampos   definiciones DD
  * @param $cSQL      consulta SQL sin LIMIT
  * @param $aOpciones menu para cada registro 
  */
@@ -413,7 +411,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     global $aEstado;
     $order   = por_defecto ($aOpciones["order"]  , $aEstado["order"], 0 );
     $orderby = por_defecto ($aOpciones["orderby"], $aEstado["orderby"], "ASC");
-    // comppletar SELECT
+    // completar SELECT
     if ( stripos($cSQL,"SELECT ")!== 0 ){
         foreach ( $aCampos as $dd ){
             if (isset($dd["campo"])) {
@@ -427,8 +425,8 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
                 $campos= array_merge($campos,$dd["campos"]);
             }
         }
-        // TODO REVISAR.
-        $cSQL = "SELECT " . implode(",",$campos) . (stripos($cSQL,"FROM ")===0 ?  $cSQL : " FROM $cSQL");        
+        // TODO REVISAR.       
+        $cSQL = "SELECT " . implode(",",$campos) . (stripos($cSQL,"FROM ")===0 ?  " " . $cSQL : " FROM $cSQL");                
     }
     if ( stripos ( $cSQL, "order by") ){// NO PUEDE SER cero
     	  //if (preg_match ("#order by (.*)( LIMIT)?#uim", $cSQL, $aTemp )) Esta seria la buena  		
@@ -450,7 +448,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     }
 
     // calcular la cabecera (pie incluido ) y luego el cuerpo.
-    $atributosTabla =  "class='" . ( isset ($aOpciones["tablaClase"]) ? $aOpciones["tablaClase"] : "consulta") . "'" ;
+    $atributosTabla =  "class='" . por_defecto ( $aOpciones["tablaClase"] , "consulta") . "'" ;
     if ( isset( $aOpciones["tablaID"]) ) {
         $atributosTabla .= " id='{$aOpciones[tablaID]}";
     }
@@ -791,11 +789,6 @@ if ( $lObligatorio ){
 
 // calcular la cabecera (pie incluido ) y luego el cuerpo.
 $atributosTabla =  "class='" . _ddlib_opcion( $aOpciones, "tablaClase", "edicion") . "'" ;
-if ( isset( $aOpciones["tablaID"]) ) {
-   $atributosTabla .= " id='{$aOpciones[tablaID]}'";
-}
-
-
 $ultimaTabla="";  
 
 // obtener los valores
@@ -822,6 +815,7 @@ if ( $cSQL != ""  ) {
 
 // empieza el bucle para dibujar los valores 
 $nCont = 1;
+$nTabla= 1;
 if ( $aDatos ) {
    $cTable = "";
 	
@@ -847,12 +841,13 @@ if ( $aDatos ) {
             if ( $ultimaTabla ){
                $cTabla .= "\n</table>"; 
             }
-            $ultimaTabla= _ddlib_opcion ($dd, "tablaID", "tabla-$nCont");                
+            $ultimaTabla= por_defecto ( $aOpciones["tablaID"], "tabla-$nCont");
+            $nTabla++;                                        
             $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
 			
 			case "separador":
             if ( !$ultimaTabla ){
-                 $ultimaTabla= _ddlib_opcion ($dd, "tablaID", "tabla-$nCont");                
+                 $ultimaTabla= por_defecto ( $aOpciones["tablaID"], "tabla-$nCont");                
                  $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
             }			
 			
@@ -866,7 +861,7 @@ if ( $aDatos ) {
 			   if ( $visualizar = ddlib_editarCampo ( $dd, $aDatos, "$prefijoID$nCont" )){
 			             		
                if ( !$ultimaTabla ){
-                  $ultimaTabla= _ddlib_opcion ($dd, "tablaID", "tabla-$nCont");                
+                  $ultimaTabla= por_defecto ( $aOpciones["tablaID"], "tabla-$nCont");                
                   $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
                }   
       				            					
@@ -889,7 +884,7 @@ if ( $aDatos ) {
 	} // fin del bucle foreach del dd
 	
 	// botones de Enviar y Volver. 
-	$cTabla .= "<tr><td class='botones-enviar' colspan='2'><input type='submit' value='$cEnviar' class='boton' />";
+	$cTabla .= "<tr><td class='botones-enviar' colspan='2'><input type='submit' value='{$cEnviar}' class='boton' />";
 	if ( $aOpciones["volver"]===true ){
 	   $cTabla .= "<a href='" . strtr( $_SERVER["HTTP_REFERER"], array("&"=>"&amp;") ) ."' class='boton'>Volver</a>";
 	}

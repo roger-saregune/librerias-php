@@ -1,133 +1,328 @@
-Documentacion del modulo datadriven
+Documentacion librería datadriven
+by Roger
+version 2010/06/03
+@TODO Edicion / consulta.
+
+GENERAL
+=====================================================================
+
+Es un libreria que permite el manejo básico de tablas.
+
+Proporciona tres funciones básicas: 
+ddlib_edicion : para editar/añadir datos o simplemente dibujar un formulario.
+ddlib_consulta: hacer consultas tabuladas sobre SQL.
+ddlib_guardar : guardar (añadir o actualizar) los datos provenientes de un formulario.
+
+
+ddlib_edicion ( $dd, $sql="", $opciones )
+  $dd          array datadriven de campos.
+  $sql         (opcional) cadena con el SQL. Si existe, 
+  $opciones    array con opciones: título, método.
+  
+ddlib_consulta ( $dd,  $sql, $opciones ="" )
+  $dd          array datadriven de campos.
+  $sql         Cadena con la SQL para extraer los datos.
+  $opciones    (opcional)array con opciones: título, método.
+
+ddlib_guardar ( $tabla, $cWhere, $dd, $opciones = NULL ){
+  $tabla       Cadena con el nombre de la tabla donde se inserta / modificación
+  $where       Cadena con la clausula para modificar. Si esta vacía se inserta.
+  $dd          array datadriven. El mismo usado en ddlib_edicion
+  $opciones    (opional). Opciones extras.
+
+(ejemplos un poco mas abajo)
+
+Array Datadriven 
+INTRODUCCION
+=====================================================================
+
+Los array de edición y consulta son muy parecidos. Normalmente en la consulta se
+selecciona un rango de campos y en la edición se incluyen todos. 
+
+Cada elemento del array representa un campo y es a su vez, otro array. Los claves básicas son
+campo, cabecera, tipo. Por ejemplo
+
+$ddPersonas = array (
+  // primer campo de la tabla / formulario
+  array ("campo"   =>"nombre"
+         "cabecera"=>"Su nombre",
+         "tipo"    =>"cadena 45 ),
+  // segunda campo de la tabla       
+  array ("campo"   =>"direccion"
+         "cabecera"=>"Su dirección",
+         "tipo"    =>"cadena 45 ),         
+) 
+
+La consulta de datos sería: 
+  ddlib_consulta ( $ddPersonas, "SELECT * FROM PERSONAS" ); 
+  ddlib_consulta ( $ddPersonas, "FROM PERSONAS WHERE MUNICIPIO='vitoria'" ); // se si omite SELECT...el sistema lo genera con los campos necesarios.
+  ddlib_consulta ( $ddPersonas, "PERSONAS" ); // se si omite SELECTY FROM el sistema lo genera con los campos necesarios.
+
+La edición de la ficha 3
+  ddlib_edicion  ( $ddPersonas, "SELECT * FROM PERSONAS WHERE ID=3" );
+
+La edición de una nueva persona
+  ddlib_edicion  ( $ddPersonas  );
+
+Añadir un nueva persona:
+  ddlib_guardar ( "PERSONAS", "", $ddPersonas  );
+
+Editar los datos de una persona:
+  ddlib_guardar ( "PERSONAS", "ID=3", $ddPersonas  );
 
 
 
-defición de aTabla
-        
-    acceso
-       Booleano.Si se puede acceder o no al campo
+Array Datadriven 
+DEFINICION DE CAMPOS
+=====================================================================
 
-    campo
-       Puede ser        
-          funcionget ( dp -> tcampo )
-          tcampo campoBase idioma
-          
-          serialize (dp ->serializa )
-          serializa
-                      
-      	 funcion nombreFuncion [campo]
-          se llama a la función pasadole el valor de campo, o todo el registro si no se especifica.   	 
-      	 
-      	 o el nombre del campo como tal.
-    
-    campos
-       nombre de los campos. Es un array con nombreCampo=>tipoCampo   
-    
-    cabecera
-       cabecera o etiqueta label.
+
+acceso       Booleano. Opcional
+   Si se puede acceder o no al campo.
+
+campo
+   El nombre del campo o algunos de los siguientes valores      
+       funcionget ( deprecated -> tcampo )
+       tcampo campoBase idioma
        
-    defecto
-       Valor por defecto. Al añadir un nuevo registro el campo tomará este valor.
-
-    verifica
-    
-	 adicional
-	    pequeño texto adicional
-
-	 atributos
-	    atributos html adicional
-
-	 id
-	    id (opcional ya que se calcula) 
-
-	 clase
-	    id (opcional ya que se calcula)
-
-	 order
-	    si el campo se puede ordenar, la expresion (pueden ser varios campos separados con coma).
-	    Solo se usa en consultas        
-        
-    formato / clase 
-   	se usa como clase en las consultas
-    
-    filaextra.
-   	fila adicional que se dibuja en las consultas    
-    
-    
-    tipo
-       Indica el tipo de campo. Puede ser
-       
-       -separadortabla
-       Separa la tabla   
-       
-       -separador 
-       Fila de separador (el texto es [cabecera])
-       
-       hidden
-       Para añadir un hidden (value es [value] campo.         			
-       
-       fijo
-       para añadir un campo fijo (no se visualiza) 
-
-       html-after
-       funciones que se llaman al terminar.
-
-   	 url directorio
-       adjunto directorio
-       fichero adjuntos
-	   
-	    irudia directorio  	[ancho][alto] 
-	    imagen directorio  	[ancho][alto]
-	    
-		 funcion NombreFuncion ['completo']   	
-		 funcionCampo NombreFuncion
-		 funcionRegistro NombreFuncion  		     
-	  	 	     					
-		 lista   ->[lista]							
-		 listasql SQL
-		 listafuncion funcion_a_llamar						
-						$formatolista			
-       
-       checkbox          
-	    sino  (para consulta)	   
-	    si (para consulta)
-	    no (para consulta) 				
-      
-       info
-		 campo informativo (no editable) que se muestra (no se salva)      
-      
-       infofijo información
-       campo no editable con información fija 
-       
-       infofuncion funcion
-       campo no editable con información obtenida por la función.
-                                					 		 
-       htmlfijo HTML-bruto
-       
-       htmlfuncion funcion                				
-									
-		 nuevopassword size max 
-		
-		 textos cols=40 fila=8				
-		 cadena size=40 max=(size or 40)     				
-		
-		 -->sino un input=text					   			
-	 				       
- cSQL
-    si existe, es una modificación
-    sino una inserción (registro nuevo) 
+       serialize (dp ->serializa )
+       serializa
+                   
+       funcion nombreFuncion [campo]
+       se llama a la función pasadole el valor de campo, o todo el registro si no se especifica.   	 
+     
+campos
+   Un array con los nombres de los campos. nombreCampo=>tipoCampo   
+   Nota: campos y campo son excluyentes.
  
- aOpciones
-    titulo
-    tituloSinHTML
-    enviar
-    hidden
-       array con hiddens
-    tablaID
-    
-    tablaClase
+cabecera
+   Cabecera de la tabla o etiqueta label del campo
+ 
+defecto
+    Valor por defecto. Al añadir un nuevo registro el campo tomará este valor. Solo tiene sentido
+    en la edición al añadir campo.
 
-    prefijoId (campo)
-      Opcional.    
+verifica
+   En las ediciónes, es un condición que el campo debe cumplir.
+ 
+adicional
+pequeño texto adicional
+
+atributos
+atributos html adicional
+
+id
+id (opcional ya que se calcula) 
+
+clase
+id (opcional ya que se calcula)
+
+order
+si el campo se puede ordenar, la expresion (pueden ser varios campos separados con coma).
+Solo se usa en consultas        
+  
+formato / clase 
+se usa como clase en las consultas
+ 
+filaextra.
+fila adicional que se dibuja en las consultas    
+ 
+ 
+tipo
+ Indica el tipo de campo. Puede ser
+ 
+
+Array Datadriven 
+DEFINICION DE TIPOS SEGUN CONSULTA O EDICION
+=====================================================================
+
+Para las consultas:
+adjunto, url
+implode
+lista ->lista
+checkbox
+sino, si, no
+funcion funcioncampo funcionregistro
+imagen irudia ->ancho alto
+básicos: cadena, fecha
+
+Para las ediciones
+hidden            			
+fijo
+htmldespues
+separadortabla
+separador
+adjunto
+imagen
+irudia
+lista
+listasql
+listafuncion  formatolista: checkbox|radio|select            
+checkbox
+checkboxes
+infofijo
+infofuncion           
+readonly
+info           
+htmlfijo        
+html
+htmlfuncion           
+nuevopassword
+verificapassword           
+texto           
+cadena
+
+
+
+Array Datadriven 
+DEFINICION DE TIPOS PARA CONSULTA
+=====================================================================
+adjunto path mascara 
+url
+implode
+lista ->lista
+checkbox
+sino, si, no
+funcion funcioncampo funcionregistro
+imagen irudia ->ancho alto
+básicos: cadena, fecha
+
+
+
+
+Array Datadriven 
+DEFINICION DE TIPOS PARA EDICION
+=====================================================================
+
+ -separadortabla
+ Separa la tabla   
+ 
+ -separador 
+ Fila de separador (el texto es [cabecera])
+ 
+ hidden
+ Para añadir un hidden (value es [value] campo.         			
+ 
+ fijo
+ para añadir un campo fijo (no se visualiza) 
+
+ html-after
+ funciones que se llaman al terminar.
+
+ url directorio
+ adjunto directorio
+ fichero adjuntos
+
+ irudia directorio  	[ancho][alto] 
+ imagen directorio  	[ancho][alto]
+ 
+ funcion NombreFuncion ['completo']   	
+ funcionCampo NombreFuncion
+ funcionRegistro NombreFuncion  		     
+  	 	     					
+ lista   ->[lista]							
+ listasql SQL
+ listafuncion funcion_a_llamar						
+			$formatolista			
+ 
+ checkbox          
+ sino  (para consulta)	   
+ si (para consulta)
+ no (para consulta) 				
+
+ info
+ campo informativo (no editable) que se muestra (no se salva)      
+
+ infofijo información
+ campo no editable con información fija 
+ 
+ infofuncion funcion
+ campo no editable con información obtenida por la función.
+                       					 		 
+ htmlfijo HTML-bruto
+ 
+ htmlfuncion funcion                				
+						
+ nuevopassword size max 
+
+ textos cols=40 fila=8				
+ cadena size=40 max=(size or 40)     				
+
+ -->sino un input=text					   			
+	 				       
+
+
+$opciones en EDICION
+===========================================================
+(todos son opcionales)
     
-    volver
+titulo cadena (puede contener HTML)
+ Encabezado del formulario o tabla, se le añadir H2 y span.. Por ejemplo: "Resultados"
+
+tituloSinHTML booleano
+ Booleano. Si es true, no añade HTML a la cabecera. 
+
+metodo   cadena: post | get.
+ 
+enviar  cadena
+ Texto del boton enviar.
+
+hidden array (name=>value)
+ array con los campos ocultos. 
+ Normalmente será "hidden"=>maquetador_array ( controlador, accion ),
+ 
+tablaID cadena
+ ID para la tabla (por defecto es 'table-nº de tabla')
+
+tablaClase cadena
+ Clase para la tabla (por defecto es 'edicion' o 'consulta' según el caso)
+
+prefijoID
+ Prefijo usado en los campos. Por defecto es "campo" lo que puede dar problemas con las ID
+ si hubiera dos tablas en una misma web.
+
+volver Booleano
+   Si se añade un botón de volver, basado en el REFERER.
+   
+
+$opciones en CONSULTA
+===========================================================
+(todos son opcionales)
+    
+titulo cadena (puede contener HTML)
+   Encabezado del formulario o tabla, se le añadir H2 y span.. Por ejemplo: "Resultados"
+
+tituloSinHTML booleano
+   Booleano. Si es true, no añade HTML a la cabecera. 
+
+menu cadena o un array
+Menú que se coloca en la cabecera (si es un array se genera una lista ul-li)
+
+opciones (array o string), 
+Si se define, para cada fila, se genera un columna final de opciones. Puede ser una cadena, o una array (en esta caso
+se encadenan todas las opcion con el opcionesSeparador. La cadena puede contener la marca %id% que será sustituida
+por el campo opcionID (o el primero ). Por ejemplo:  "<a href='?c=personas&a=borrar&i=%id%i>borrar</a>" 
+
+queryString (opcional)
+La querystring de la consulta.
+
+paginacion. Booleano
+Si debe o no aplicarse páginación
+
+registrosPorPagina numero (20)
+
+paginas numero (10).
+   
+tablaID cadena
+ ID para la tabla (por defecto es 'table-nº de tabla')
+
+tablaClase cadena
+ Clase para la tabla (por defecto es 'edicion' o 'consulta' según el caso)
+
+order  Opcional, numero.
+  El orden inicial de los datos. Por defecto, el orden se obtiene examinando el estado ( $_REQUEST["order"] )
+
+orderby  Opcional (ASC|DESC)
+  El orden ascdente o descendent. Por defecto, el orden se obtiene examinando el estado ( $_REQUEST["orderby"] )
+   
+   
