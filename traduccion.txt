@@ -1,42 +1,40 @@
-Para que
-----------------------------------------------------------------
-Tener una pequeña libreria para traducir aplicaciones bilingues
-(euskera / castellano).
+Documentación Modulo traducción
+Version 2010/06/07 
+ 
+ 
 
-No pretender sustituir a I18.
+Modulo Traducción
+===============================
 
-
-
-Como funciona
-----------------------------------------------------------------
-En una tabla se almacenan las cadenas. Dicha tabla debe tener un campo para cada idioma.
-Por ejemplo con "es", "eu", debería tener los campos es,eu.
+Es un modulo muy muy básico que pretende resolver la traducción de aplicaciones / librerias.
+La idea es guardar las traducciones en una tabla (llamada locale).
 
 
 
+funciones configuración
+-----------------------
+tIdiomaBase(idioma) 
+   Establecer el idioma en el que se escribio la libreria o aplicación. Por defecto: "es" 
+tIdiomaPorDefecto(idioma)
+   Establecer el idioma actual en el que se tienen que presentar los textos. Por defecto: "es"
+tIdiomaTabla(tabla)
+   Establecer la tabla para las traducciones. Por defecto: "locale"
+ 
+funciones traduccion 
+--------------------
+t  ( cadena ) 
+   traducir al idioma actual
+tfijo (cadena, idioma)
+   traducir al idioma definido
 
-Configuración 
-----------------------------------------------------------------
-
-tIdiomaPorDefecto ( idioma )
-Establecer el idioma al que se traduciran todas las cadenas. Por defecto "es"
-
-tIdiomaBase       (idioma)
-Establecer el idioma en el que se escribio el código original. Por defecto "es"
-
-tIdiomaTabla      ( tabla)
-Establecer la tabla que guarda los locale.
-
-Ejemplos:
-Si tenemos locale con los campos id,eu,es y el usuario elige euskera(eu) la configuracion debería ser:
-tIdiomaBase("id");
-tIdiomaPorDefecto("eu");
-
-Si tenemos locale con los campos eu,es, el usuario elige euskera(es), y hemos escrito el programa en castellano:
-tIdiomaBase("es");
-tIdiomaPorDefecto("eu");
+funciones mysql
+---------------
+tSQLCampo( campo, [alias])
+  devolver un campo virtual. Tenemos por ejemplo, titulo_es, titulo_eu, con el título en castellano y euskera.
+  tSQLCampo("titulo") devuelve el campo virtual "titulo" con el título, si esta, en el idioma actual, o en el otro.
 
 
 
+* hay mas funciones..sin testear a fondo.
 
 
