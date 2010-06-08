@@ -1,6 +1,6 @@
 Documentacion librería datadriven
 by Roger
-version 2010/06/03
+version 2010/06/07
 @TODO Edicion / consulta.
 
 GENERAL
@@ -55,7 +55,8 @@ $ddPersonas = array (
 
 La consulta de datos sería: 
   ddlib_consulta ( $ddPersonas, "SELECT * FROM PERSONAS" ); 
-  ddlib_consulta ( $ddPersonas, "FROM PERSONAS WHERE MUNICIPIO='vitoria'" ); // se si omite SELECT...el sistema lo genera con los campos necesarios.
+  ddlib_consulta ( $ddPersonas, "FROM PERSONAS WHERE MUNICIPIO='vitoria'" ); 
+	 Nota: se si omite SELECT...el sistema lo genera con los campos necesarios.
   ddlib_consulta ( $ddPersonas, "PERSONAS" ); // se si omite SELECTY FROM el sistema lo genera con los campos necesarios.
 
 La edición de la ficha 3
@@ -147,7 +148,7 @@ imagen irudia ->ancho alto
 básicos: cadena, fecha
 
 Para las ediciones
-hidden            			
+hidden
 fijo
 htmldespues
 separadortabla
@@ -238,88 +239,88 @@ DEFINICION DE TIPOS PARA EDICION
  
  infofuncion funcion
  campo no editable con información obtenida por la función.
-                       					 		 
+
  htmlfijo HTML-bruto
  
- htmlfuncion funcion                				
-						
+ htmlfuncion funcion
+
  nuevopassword size max 
 
- textos cols=40 fila=8				
- cadena size=40 max=(size or 40)     				
+ textos cols=40 fila=8
+ cadena size=40 max=(size or 40)
 
- -->sino un input=text					   			
-	 				       
+ -->sino un input=text
 
 
-$opciones en EDICION
+$opciones de ddlib_edicion
 ===========================================================
 (todos son opcionales)
     
 titulo cadena (puede contener HTML)
- Encabezado del formulario o tabla, se le añadir H2 y span.. Por ejemplo: "Resultados"
+  Encabezado del formulario o tabla, se le añadir H2 y span.. Por ejemplo: "Resultados"
 
 tituloSinHTML booleano
- Booleano. Si es true, no añade HTML a la cabecera. 
+  Booleano. Si es true, no añade HTML a la cabecera. 
 
 metodo   cadena: post | get.
  
 enviar  cadena
- Texto del boton enviar.
+  Texto del boton enviar.
 
 hidden array (name=>value)
- array con los campos ocultos. 
- Normalmente será "hidden"=>maquetador_array ( controlador, accion ),
+  array con los campos ocultos. 
+  Normalmente será "hidden"=>maquetador_array ( controlador, accion ),
  
 tablaID cadena
- ID para la tabla (por defecto es 'table-nº de tabla')
+  ID para la tabla (por defecto es 'table-nº de tabla')
 
 tablaClase cadena
- Clase para la tabla (por defecto es 'edicion' o 'consulta' según el caso)
+  Clase para la tabla (por defecto es 'edicion' o 'consulta' según el caso)
 
 prefijoID
- Prefijo usado en los campos. Por defecto es "campo" lo que puede dar problemas con las ID
- si hubiera dos tablas en una misma web.
+  Prefijo usado en los campos. Por defecto es "campo" lo que puede dar problemas con las ID
+  si hubiera dos tablas en una misma web.
 
 volver Booleano
    Si se añade un botón de volver, basado en el REFERER.
    
 
-$opciones en CONSULTA
+$opciones en ddlib_consulta
 ===========================================================
-(todos son opcionales)
+(todas las opciones son opcionales)
     
-titulo cadena (puede contener HTML)
-   Encabezado del formulario o tabla, se le añadir H2 y span.. Por ejemplo: "Resultados"
+titulo cadena 
+   Encabezado del formulario o tabla, se le añade H2 y span.. Por ejemplo: "Resultados"
 
 tituloSinHTML booleano
-   Booleano. Si es true, no añade HTML a la cabecera. 
+  Booleano. Si es true, no se añade HTML a la cabecera. 
 
-menu cadena o un array
-Menú que se coloca en la cabecera (si es un array se genera una lista ul-li)
+menu cadena o array
+  Menú que se coloca en la cabecera (si es un array se genera una lista ul-li)
 
 opciones (array o string), 
-Si se define, para cada fila, se genera un columna final de opciones. Puede ser una cadena, o una array (en esta caso
-se encadenan todas las opcion con el opcionesSeparador. La cadena puede contener la marca %id% que será sustituida
-por el campo opcionID (o el primero ). Por ejemplo:  "<a href='?c=personas&a=borrar&i=%id%i>borrar</a>" 
+  Si se define, para cada fila, se genera un columna final de opciones. Puede ser una cadena, o una array (en esta caso
+  se encadenan todas las opcion con el opcionesSeparador. La cadena puede contener la marca %id% que será sustituida
+  por el campo opcionID (o el primero ). Por ejemplo:  "<a href='?c=personas&a=borrar&i=%id%i>borrar</a>" 
 
 queryString (opcional)
-La querystring de la consulta.
+  La querystring de la consulta.
 
-paginacion. Booleano
-Si debe o no aplicarse páginación
+paginacion  Booleano (true)
+  Si debe o no aplicarse páginación
 
 registrosPorPagina numero (20)
+  Por defecto el nº de registro por página es 20, pero se puede modificar con esta opción.
 
 paginas numero (10).
    
 tablaID cadena
- ID para la tabla (por defecto es 'table-nº de tabla')
+  ID para la tabla (por defecto es 'table-nº de tabla')
 
 tablaClase cadena
- Clase para la tabla (por defecto es 'edicion' o 'consulta' según el caso)
+  Clase para la tabla (por defecto es 'edicion' o 'consulta' según el caso)
 
-order  Opcional, numero.
+order  numero.
   El orden inicial de los datos. Por defecto, el orden se obtiene examinando el estado ( $_REQUEST["order"] )
 
 orderby  Opcional (ASC|DESC)
