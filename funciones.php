@@ -95,7 +95,7 @@ function por_defecto(){
  * Las fechas tambien se pueden hacer con:
  * setlocale (LC_TIME, "sp");
  * strftime("%A, %d de %B."), Lunes, 5 de Septiembre
- * pero requiere tener instalado el modulo idioma seleccionado en el servidor.
+ * pero requiere tener instalado el idioma seleccionado en el servidor.
  *
  */
 
@@ -104,7 +104,7 @@ function fecha_formato ( $fecha, $idioma="es", $formato=""){
     switch ($idioma){
         case "es": 
             preg_match( '#([0-9]{1,2})[-/]([0-9]{1,2})[-/]([0-9]{1,4})#ui', $fecha, $temp);
-            $dia  = $temp[1];
+            $dia    = $temp[1];
             $mes  = $temp[2];
             $anno = $temp[3];
             if ( !$formato ) {

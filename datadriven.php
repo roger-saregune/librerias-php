@@ -8,6 +8,9 @@
  * @author  Roger
  * 
  * Correcciones
+ * 2010/06/08 Ampliado: order pueder ser 1,con lo cual se asume que es campo.
+              En consulta: la fecha sale en el formato adecuado, añadido campo siNO, SIno, SINO
+              
  * 2010/06/02 Corregido: opcionId, opcionID o primer campo
  * 2010/06/02 Corregido: tablaID de edicion
  * 2010/05/28 Corregido: primer separador genera la tabla
@@ -173,17 +176,26 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
 
 	
         case "checkbox":
+        
+        case "SINO":
+            return "<strong>". ( $campo ? tIdiomaLocale ("SI") : tIdiomaLocale ("NO") ) . "</strong>";
+        case "siNO":
+            return ( $campo ? tIdiomaLocale ("SI") : "<strong>".tIdiomaLocale ("NO"). "</strong>");             
+        case "SIno":
+            return ( $campo ? "<strong>".tIdiomaLocale ("SI") . "</strong>": tIdiomaLocale ("NO"));        
+        
         case "sino":
             $campo = ( $campo ? "SI": "NO");
-            return $TIDIOMA_LOCALE[$idioma][$campo] ;
+            return tIdiomaLocale ($campo ) ;
+
 
         case "si" :
             $campo = ( $campo ? "SI": "");            
-            return $TIDIOMA_LOCALE[$idioma][$campo] ;
+            return tIdiomaLocale ($campo ) ;
 
         case "no" :
             $campo = ( $campo ? "" : "NO");        
-            return $TIDIOMA_LOCALE[$idioma][$campo] ;
+            return tIdiomaLocale ($campo ) ;
 
         case "funcioncampo" :
             return call_user_func( $aParametros[1], $campo );
@@ -208,6 +220,9 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
                 return "";
             }
 
+        case "fecha":
+            return fecha_mysql_php ( $campo, tIdiomaLocale ("fecha") );
+         
         default:
             return $campo;
     }
@@ -434,8 +449,12 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
   		     $leyenda= $aTemp[1] ;
   		  }  
     } elseif ( isset($aCampos[$order]["order"])) {
-        $cSQL .= sql_order( $aCampos[$order]["order"] , ( $orderby == "ASC" ? " ASC": " DESC"));
-        $leyenda = $aCampos[$order]["order"]; // @TODO ordenes de varios campos
+        $cTempOrder = $aCampos[$order]["order"];
+        if ( $cTempOrder == 1 ){
+           $cTempOrder = $aCampos[$order]["campo"]; 
+        }
+        $cSQL .= sql_order( $cTempOrder , ( $orderby == "ASC" ? " ASC": " DESC"));
+        $leyenda = $cTempOrder; // @TODO ordenes de varios campos        
     }
 
     // Paginación.

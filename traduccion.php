@@ -34,11 +34,13 @@ $TIDIOMA_TABLA  = "locale";
 // algunos locales añadidos.
 // @TODO un sistema de carga mediante ficheros de configuraciones. 
 $TIDIOMA_LOCALE["es"]= array (
+   "fecha"      =>"m/d/Y",
    "paginacion" =>"Página %s de %s",
    "SI"=>"Si",
    "NO"=>"No" );
 
 $TIDIOMA_LOCALE["eu"]= array (
+   "fecha"      =>"Y/m/d",
    "paginacion" =>'%2$s(e)tik -  %1$s.orria',  // @TODO REVISAR TRADUCCION
    "SI"=>"Bai",
    "NO"=>"Ez" );
