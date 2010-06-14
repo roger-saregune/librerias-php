@@ -4,10 +4,14 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2010-05-28
+ * @version 2010-06-10
  * @author  Roger
- * 
+ * @todo Borrar imagenes y adjuntos.
+ *  
  * Correcciones
+ * 2010/06/02 Corregido: opcionId, opcionID ahoa son opcionesID (por coherencia )
+              en edición hay un nuevo tipo listavalores.
+ * 2010/06/09 Corregido borrar imagenes y adjuntos. Falto borrar el fichero.
  * 2010/06/08 Ampliado: order pueder ser 1,con lo cual se asume que es campo.
               En consulta: la fecha sale en el formato adecuado, añadido campo siNO, SIno, SINO
               
@@ -208,7 +212,7 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
         case "irudia":
             if ( $campo ) {
                 $cTemp      = ( isset($aParametros[1]) ? $aParametros[1] ."/"  : "") . $campo;
-                $atributos  = "";
+                $atributos  = "";                
                 if ( isset($aCampo["ancho"]) ) {
                     $atributos  = " width='{$aCampo[ancho]}'";
                 }
@@ -301,7 +305,7 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
    
 
   if ( $lHayOpciones = isset( $aOpciones["opciones"])){    
-     $opcionID          = por_defecto ( $aOpciones["opcionId"], $aOpciones["opcionID"], $aTabla[0]["campo"] );
+     $opcionID          = por_defecto ( $aOpciones["opcionesId"], $aOpciones["opcionesID"], $aTabla[0]["campo"] );
      $separadorOpciones = por_defecto ( $aOpciones["opcionesSeparador"],"|");
   }    
     
@@ -424,8 +428,8 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
 
     // Ordenar los campos
     global $aEstado;
-    $order   = por_defecto ($aOpciones["order"]  , $aEstado["order"], 0 );
-    $orderby = por_defecto ($aOpciones["orderby"], $aEstado["orderby"], "ASC");
+    $order   = por_defecto ($aEstado["order"]  , $aOpciones["order"], 0 );
+    $orderby = por_defecto ($aEstado["orderby"], $aOpciones["orderby"], "ASC");
     // completar SELECT
     if ( stripos($cSQL,"SELECT ")!== 0 ){
         foreach ( $aCampos as $dd ){
@@ -443,6 +447,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
         // TODO REVISAR.       
         $cSQL = "SELECT " . implode(",",$campos) . (stripos($cSQL,"FROM ")===0 ?  " " . $cSQL : " FROM $cSQL");                
     }
+    
     if ( stripos ( $cSQL, "order by") ){// NO PUEDE SER cero
     	  //if (preg_match ("#order by (.*)( LIMIT)?#uim", $cSQL, $aTemp )) Esta seria la buena  		
   		  if (preg_match ("#order by ([^ ,]*)#uim", $cSQL, $aTemp )){
@@ -456,7 +461,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
         $cSQL .= sql_order( $cTempOrder , ( $orderby == "ASC" ? " ASC": " DESC"));
         $leyenda = $cTempOrder; // @TODO ordenes de varios campos        
     }
-
+    
     // Paginación.
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
         $pags        = por_defecto ($aOpciones["paginas"], 10);
@@ -592,6 +597,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
 
        // listas
        case "lista":
+       case "listavalores":
        case "listasql":
        case "listafuncion":
 
@@ -604,6 +610,11 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
                    break;
                case "lista":
                    $lista= $dd["lista"];
+                   break;
+               case "listavalores":
+                   foreach ( $dd["lista"] as $valor) {
+                      $lista[$valor] = $valor;
+                   };                 
                    break;
                case "listafuncion":
                    $lista= call_user_func($aParametros[1]);
@@ -784,8 +795,8 @@ if ( isset($aOpciones["hidden"]) ) {
 
 // se revisan los campos para ver ocultos, obligatorios y demás
 foreach ( $aTabla as $k=>$dd) {
-	$tipo= strtolower(strtok( $dd["tipo"]," "));
-
+	list($tipo) = explode ( " ", $dd["tipo"] );
+	$tipo = strtolower($tipo);   
    // campos hidden 	
 	if ( $tipo=="hidden" ) {
 		$cHidden .= sprintf( "<input type='hidden' value='%s' name='%s'/>",
@@ -849,10 +860,10 @@ if ( $aDatos ) {
 		$cTipo       = strtolower($aParametros[0]);				         
                   
       switch ( $cTipo ) {        
-         // casos especiales          
+         // casos especiales
+         case "htmldespues":
          case "hidden":            			
          case "fijo" : 
-         case "htmldespues":         
             break;
 
          // separador                    
@@ -1046,13 +1057,10 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    		case "readonly":
    			break;
 
-		   case "adjunto":
-		      $lPendiente = true;
-		      break;
-   		
+		   case "adjunto":		         		
    		case "imagen" :
    		case "irudia" :   
-            if ( $_REQUEST[ $aDatos["campo"]."_EZABATU"]=='1'){
+            if ( $_REQUEST[ $aDatos["campo"]."_BORRAR"]=='1' || $_REQUEST[ $aDatos["campo"]."_EZABATU"]=='1' ){
                sql_add($aSQL,  $aDatos["campo"], "", "cadena");               
             } else {   		
 				   $lPendiente = true;
@@ -1071,6 +1079,10 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
          case "fijo":             
    			sql_add($aSQL,  $aDatos["campo"], $aDatos["valor"], $aParametros[1]);
             break;
+         
+         case "listavalores":
+   			sql_add_request( $aSQL,  $aDatos["campo"], por_defecto($aParametros[2],"cadena") );   		
+   			break;         
          
    		case "listafuncion":
    			sql_add_request( $aSQL,  $aDatos["campo"], $aParametros[2]);

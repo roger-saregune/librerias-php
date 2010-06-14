@@ -119,7 +119,7 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
 	 }
 
     // leer la plantilla
-    $html     = maquetador_insertar_include ( $plantilla );
+    $html     = maquetador_insertar_include ( $plantilla );       
     $aGenerar = maquetador_extraer_marcas ( $html );
 
     foreach ( $aGenerar as $marca=>$contenido ) {

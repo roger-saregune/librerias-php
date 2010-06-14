@@ -207,7 +207,7 @@ DEFINICION DE TIPOS PARA EDICION
  fijo
  para añadir un campo fijo (no se visualiza) 
 
- html-after
+ htmldespues
  funciones que se llaman al terminar.
 
  url directorio
@@ -221,10 +221,14 @@ DEFINICION DE TIPOS PARA EDICION
  funcionCampo NombreFuncion
  funcionRegistro NombreFuncion  		     
   	 	     					
- lista   ->[lista]							
+ lista   ->[lista]
+ Se trata de una lista. Las claves y valores estan en el array dd["lista"] 
+ listavalores ->[lista]						
+ Se trata de una lista. Los valores estan en el array dd["lista"] (se ignoran las claves)
  listasql SQL
  listafuncion funcion_a_llamar						
-			$formatolista			
+
+ formatolista			
  
  checkbox          
  sino  (para consulta)	   
