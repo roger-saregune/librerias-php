@@ -9,6 +9,8 @@
  * @todo Borrar imagenes y adjuntos.
  *  
  * Correcciones
+ * 2010/06/13 Corregido: ddlib_consulta al manejar dd con campos sin acceso, calculaba
+ *             mal la cabecera y no se ordenaba. 
  * 2010/06/02 Corregido: opcionId, opcionID ahoa son opcionesID (por coherencia )
               en edición hay un nuevo tipo listavalores.
  * 2010/06/09 Corregido borrar imagenes y adjuntos. Falto borrar el fichero.
@@ -256,6 +258,7 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
    $lista = "";   
    foreach ( $aTabla as  $aCelda) {
       if ( $aCelda["acceso"]===false || isset($aCelda["filaextra"]) ) {
+         $nCont++;
          continue;     
       }
       
@@ -461,7 +464,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
         $cSQL .= sql_order( $cTempOrder , ( $orderby == "ASC" ? " ASC": " DESC"));
         $leyenda = $cTempOrder; // @TODO ordenes de varios campos        
     }
-    
+            
     // Paginación.
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
         $pags        = por_defecto ($aOpciones["paginas"], 10);
