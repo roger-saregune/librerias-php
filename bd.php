@@ -2,6 +2,8 @@
 
 /*
  * Experimento: hacer una librería datadriven capaz de manejar varias tablas.
+ * @version .01 (experimental)
+ * @author Roger
  */ 
   
 
@@ -49,47 +51,8 @@ function _bd_leer_registro($bd, $tabla, $id){
 
 
 /* 
- * función interna para la lectura física de registros. Devuelve un array.
- */
-
-function _bd_query_registros($SQL){
-	$rs   = mysql_query($SQL);
-	while ( $fila = mysql_fetch_array($rs, MYSQL_ASSOC) ){
-	   $filas[] = $fila;	   
-	}
-	mysql_free_result ($rs);
-   return $filas;
-}
-
-
-/* 
- * función interna para la lectura lógica de un registros. Devuelve un array.
- */
-
-function _bd_leer_registros($bd, $tabla, $vid){
-   $join ="";
-   if ( isset( $bd[$tabla]["codigos"] )){      
-      foreach ( $bd[$tabla]["codigos"] as $campo =>$donde) {
-         $join = " LEFT JOIN $donde ON $campo =" . $bd[$donde]["id"]; 
-      }        
-   }
-   $SQL = "SELECT * FROM $tabla$join WHERE " . $bd[$tabla]["padreID"] . "=$vid";      
-   return _bd_query_registros ( $SQL);   
-} 
-
-
-/* 
  * function interna para calcular los hijos de un registro 
  */
-function bd_hijos_de( $bd, $padre ){
-   $aRet=array();
-   foreach ( $bd as $i=>$tabla ) {
-      if ( $tabla["padre"] == $padre ) {
-         $aRet[] = $i;
-      }
-   }
-   return $aRet;
-}
 
 
 function bd_leer_registro ( $bd, $tabla, $id ) { 
@@ -97,15 +60,65 @@ function bd_leer_registro ( $bd, $tabla, $id ) {
       return false;
    }      
    // leer el registro principal
-   $ret[$tabla] = _bd_leer_registro($bd, $tabla, $id);
-   // leer claves secundarias
-   $vid= _bd_codifica( $id, $bd[$tabla]["tipo"] );
-   foreach ( bd_hijos_de ($bd, $tabla) as $hijo ){
-      $ret[$hijo] = _bd_leer_registros ( $bd, $hijo, $vid );
-   }   
+   $ret = _bd_leer_registro(&$bd, $tabla, $id);
    
+   // leer claves secundarias / hijos / nietos /...
+   $vid= _bd_codifica( $id, $bd[$tabla]["tipo"] );
+   if ( is_array($bd[$tabla]["hijos"]) ){      
+      
+   	foreach ( $bd[$tabla]["hijos"] as $campo=>$hijo ){
+   	   // obtenemos la lista de los hijos
+   	   $lista = mysql_query_lista("SELECT " . $bd[$hijo]["id"] . " FROM $hijo WHERE $campo=$vid");
+   	   if ( is_array($lista) ){
+         	foreach ( $lista as $hijoID ) {
+         		$ret[$hijo][] = bd_leer_registro(&$bd,$hijo,$hijoID);
+         	}   	   
+         }
+   	   
+      }   
+   }
+
    return $ret;
 }
+
+
+function _bd_campo_cadena ( $valor, $accion ){
+	switch ( $accion ){
+		case "consulta": return $valor;
+		case "sql"     : return "'$valor'";
+		case "edicion_campo" : return "<input type='text'>"
+		case "edicion_label" : return "cadena";
+	}
+}
+
+function _bd_campo_entero ( $valor, $accion ){
+	switch ( $accion ){
+		case "consulta": return $valor;
+		case "sql"     : return $valor;
+		case "edicion_campo" : return "<input type='text'>"
+		case "edicion_label" : return "cadena";
+	}
+}
+
+
+
+function bd_campo ( $valor, $tipo, $accion ) {
+	switch ( $tipo ){
+		"cadena": return _bd_campo_cadena($valor,$accion)
+		"entero": return _bd_campo_numero($valor,$accion)
+	}
+
+}
+
+
+function bd_registro_plantilla ($reg, $plantilla ){
+
+
+
+
+}
+
+
 
 
 /*******************************************************************
@@ -130,9 +143,12 @@ $temp = bd_leer_registro($bd,"itag","hola");
 echo $temp["itag"]["itag_eu"],"\n"; */  
 
 
+
+
 $bd["item"] = array (
    "id"   =>"item_id",
-   "codigos" => array ( "item_tipo"=>"tipos"),
+   "codigos" => array ( "item_tipo"=>"tipos"),  
+   "hijos"   => array ( "comentario_item_id" =>"comentarios" ),
    "tipo" =>"entero");
 
 $bd["tipos"] = array (
@@ -141,13 +157,18 @@ $bd["tipos"] = array (
 $bd["comentarios"] = array (
    "id"     =>"comentario_id",
    "codigos"=>array ( "comentario_usuario_id"=>"usuarios"),
-   "padreID"=>"comentario_item_id",
-   "padre"  =>"item");
+   "hijos"  =>array ( "voto_comentario_id" => "votos" ) );
           
+$bd["votos"] = array (
+	"id" =>"voto_id" );
+	       
 $bd["usuarios"] = array (
    "id"     =>"usuario_id" );   
              
           
 $temp = bd_leer_registro($bd,"item",1);  
 print_r ( $temp);
+
+ 
+
 
