@@ -4,11 +4,14 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2010-06-10
+ * @version 2010-06-27
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
+ * @todo verificaciones.
  *  
  * Correcciones
+ * 2010/09/27 Corregido: paginacion ahora con querystring como variable.
+              correciones en el password.
  * 2010/06/13 Corregido: ddlib_consulta al manejar dd con campos sin acceso, calculaba
  *             mal la cabecera y no se ordenaba. 
  * 2010/06/02 Corregido: opcionId, opcionID ahoa son opcionesID (por coherencia )
@@ -43,7 +46,7 @@
  */
 
 include_once ("paginacion.php");
-include_once ("imagenes.php");
+// include_once ("imagenes.php");
 
 /* experimento */
 class ddlib_dd {
@@ -392,7 +395,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
      opciones (array o string), 
      		requiere opcionesId
      		opcional opcionesSeparador
-     queryString
+     querystring
      paginacion
      registrosPorPagina 20
      paginas 10.
@@ -469,7 +472,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
         $pags        = por_defecto ($aOpciones["paginas"], 10);
         $regs        = por_defecto ($aOpciones ["registrosPorPagina"], 20);        
-        $aPaginacion = paginacion($cSQL, $leyenda, $regs, $pags, tIdiomaLocale("paginacion") );
+        $aPaginacion = paginacion($cSQL, $leyenda, $regs, $pags, tIdiomaLocale("paginacion"), $querystring );
     } else {
         $aPaginacion = array("","",$cSQL,"");
     }
@@ -556,7 +559,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
       "adjunto"     => array ("clase"=>"boton"),
       "infofuncion" => array ("clase"=>"campo-informativo"),
       "readonly"    => array ("clase"=>"campo-informativo"),            				
-		"info"        => array ("clase"=>"campo-informativo"));
+	  "info"        => array ("clase"=>"campo-informativo"));
       
    $atributos = _ddlib_atributos ( $dd, $id, $defectos[$tipo] );
 
@@ -650,7 +653,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
            }
            return $visualizar;
 
-       case "checkbox":
+        case "checkbox":
            $checked     = ( $campo ? " checked='checked' ": "") ;
            return "<input type='checkbox' $atributos $checked value='1' />";
 		 
@@ -682,7 +685,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
        case "htmlfijo":
            return substr ($dd["tipo"],9);
 
-		 case "html":
+	   case "html":
        case "htmlfuncion":
            return call_user_func ( $aParametros[1] , $aDatos);
 
@@ -949,23 +952,23 @@ return $cResul;
  * Verificar un campo
  */
 
-function dd1_verificaCampo( $aDatos ){
-   if ( !isset($aDatos["verifica"]) ) {
-      return "" ; 
-   } 
+function ddlib_verificaCampo( $aDatos ){
+    if ( !isset($aDatos["verifica"]) ) {
+        return "" ; 
+    } 
    
-	$aErrores = explode ( "|" , $aDatos["verifica"]);  
-  	$cCampo   = $_REQUEST[$aDatos["campo"]];
+	$aErrores = explode ( " " , $aDatos["verifica"]);  
+  	$cCampo   = $_REQUEST[$aDatos["campo"]];      	
   	  	  	  		
-   switch ( trim(strtolower($aErrores[0]))){
-   	case "no_vacio":
-   	case "no_nulo":
-   		if ( $cCampo=="" ){
-   			return (isset($aErrores[1])? $aErrores[1] : "El campo ". $aDatos["cabecera"] . " no puede estar vacio.");
-   		}
-   		break;			
+    switch ( trim(strtolower($aErrores[0]))){
+   	    case "no_vacio":
+   	    case "no_nulo":
+       		if ( $cCampo=="" ){
+       			return (isset($aErrores[1])? $aErrores[1] : "El campo ". $aDatos["cabecera"] . " no puede estar vacio.");
+       		}
+       		break;			
 
-   	case ">"	:
+   	    case ">"	:
 			if ( $cCampo > $aErrores[1])
 				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser mayor que ". $aErrores[1]);
 			break;
@@ -979,7 +982,7 @@ function dd1_verificaCampo( $aDatos ){
 		case "<":
 			if ( $cCampo < $aErrores[1])
   				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor ". $aErrores[1]);
-   		break;
+   		    break;
 	
 		case "<=":
    		if ( $cCampo < $aErrores[1])
@@ -998,7 +1001,7 @@ function dd1_verificaCampo( $aDatos ){
 			                  " tienen que estar entre ". $aErrores[1] . " y " . $aErrores[2] );
 		   break;
 
-		case "verifica": 			// comprobar que dos campos coinciden		 		
+		case "verifica": 			// comprobar que dos campos coinciden		    		 		
  		   if ( $cCampo != $_REQUEST[$aErrores[1]])
 			   return (isset($aErrores[2]) ? $aErrores[2] : "Verificación incorrecta");
 	      break;
@@ -1028,8 +1031,10 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    $cNuevo= ($cWhere=="" ? "INSERT" : "UPDATE");
    
    //  Primero verificamos las condiciones de cada campo 
-   foreach ( $aEdicion as $aDatos ) {	      
-	   $cError .= ( isset($aDatos["verifica"]) ? ddlib_verificaCampo ($aDatos) : ""); 	  
+   foreach ( $aEdicion as $aDatos ) {	  
+       if ( isset($aDatos["verifica"]) ) {    
+	       $cError .= ddlib_verificaCampo ($aDatos) ;
+	   } 	  
 	} 
       
    // Revisar los errores
@@ -1037,7 +1042,7 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
       if ( isset( $aOpciones["errorverificacion"])  ){
 			$cError =  $aOpciones["errorverificacion"] . $cError;     
       }
-      return mensajes ( $cError, "error-" . ($cNuevo ? "añadir" : "guardar") ) ;	   
+      return  false; //@TODO mensajes ( $cError, "error-" . ($cNuevo ? "añadir" : "guardar") ) ;	   
    }
    
    $aSQL = sql_crear( $cNuevo, $cTabla, $cWhere );
@@ -1060,7 +1065,7 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    		case "readonly":
    			break;
 
-		   case "adjunto":		         		
+		case "adjunto":		         		
    		case "imagen" :
    		case "irudia" :   
             if ( $_REQUEST[ $aDatos["campo"]."_BORRAR"]=='1' || $_REQUEST[ $aDatos["campo"]."_EZABATU"]=='1' ){
@@ -1073,9 +1078,11 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    		case "nuevopassword":
    			if ( $_REQUEST[$aDatos["campo"]] !="" ){
    			   if ( isset($aParametros[3]) and $aParametros[3]=="md5")
-   			      sql_add( $aSQL, $aDatos["campo"], md5($_REQUEST[$aDatos["campo"]]), "cadena");
+   			     sql_add( $aSQL, $aDatos["campo"], md5($_REQUEST[$aDatos["campo"]]), "cadena");
+   			   elseif ( isset($aParametros[3]) and $aParametros[3]=="sha1")
+   			     sql_add( $aSQL, $aDatos["campo"], sha1($_REQUEST[$aDatos["campo"]]), "cadena");
    			   else
-   				   sql_add( $aSQL,  $aDatos["campo"], "cadena");
+   				 sql_add( $aSQL,  $aDatos["campo"], $_REQUEST[$aDatos["campo"]], "cadena");
    			}
    			break;
 
@@ -1136,7 +1143,7 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    if ( $lResul) {	      
 	   	$lResul = ( $aOpciones["ok"] ?  "<div class='guardarOk'   >{$aOpciones[ok]}</div>": true ); 
 	} else {
-	  	   $lResul = ( $aOpciones["ok"] ?  "<div class='guardarError'>{$aOpciones[error]}</div>" : false );   	
+	  	$lResul = ( $aOpciones["ok"] ?  "<div class='guardarError'>{$aOpciones[error]}</div>" : false );   	
 	}
    
    return $lResul ;
