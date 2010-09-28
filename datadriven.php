@@ -12,6 +12,7 @@
  * Correcciones
  * 2010/09/27 Corregido: paginacion ahora con querystring como variable.
               correciones en el password.
+ * 2010/06/29 + ddlib_salvar. Como el guardar, pero con un orden lógico de argumentos.
  * 2010/06/13 Corregido: ddlib_consulta al manejar dd con campos sin acceso, calculaba
  *             mal la cabecera y no se ordenaba. 
  * 2010/06/02 Corregido: opcionId, opcionID ahoa son opcionesID (por coherencia )
@@ -67,11 +68,11 @@ class ddlib_dd {
     $this->idEsNumerico= $idEsNumerico;    
   }
 
-  function edicion($dd) {
+  public function edicion($dd) {
      $this->edicion = $dd;
   }  
   
-  function consultar($dd, $consulta="principal") {
+  public function consultar($dd, $consulta="principal") {
      $this->consultas[$consulta]= $dd;
   }  
      
@@ -265,8 +266,8 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
          continue;     
       }
       
-      $clase  = ddlib_formatoCampo( $aCelda );
-      $orden  = ( $order == $nCont ? " ordenactual" : "");                  
+    $clase  = ddlib_formatoCampo( $aCelda );
+    $orden  = ( $order == $nCont ? " ordenactual" : "");                  
    	$lista .= "\n<th class='$clase$orden'>";
          	   	   
    	$cNodo = remove_querystring_var ( "?". $querystring, "order");
@@ -1024,6 +1025,11 @@ function ddlib_verificaCampo( $aDatos ){
 /**
  * Función que construye la SQL para insertar o actualizar los datos y los guarda.
 */
+
+function ddlib_salvar( $dd, $cTabla, $cWhere="",$aOpciones= NULL ){
+    return ddlib_guardar ( $cTabla, $cWhere, $dd, $aOpciones);
+}
+
 
 function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    $cError= "";
