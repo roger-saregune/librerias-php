@@ -4,9 +4,16 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2010-04-30
+  * @version 2010-09-29
   * @licence GPL
 
+  * 2010/09/29 Repaso de mqueryString. 
+  *            + mquerystringToArray
+  *            + mquerystringFromArray
+  *            c mquerystringAdd. Solo admite un argumento y devuelve string
+  *            c mquerystringDel. Solo admite un argumento y devuelve string
+  * 2010/06/29 + mensajeHTML
+  * 2010/06/28 corregido mimplode
   * 2010/05/21 correciones en mysql_template : /uims
   * 2010/05/19 ereg sustituido por preg_match
   * 2010/05/11 mprint tiene un 3º parametros opcional HTML=true
@@ -381,38 +388,41 @@ function mRequest($cCual){
    return $cTemp;
 }
 
-function mQueryStringAdd ($nuevas=false, $urlEncoded=true){
-   // convertir en array
-   $resul = array(); 
-   if ( $q = $_SERVER["QUERY_STRING"]){
-      $pares= explode("&",$q);
-      foreach ($pares as $par ){
-        list($variable,$valor)=explode("=",$par);
-        $resul[$variable] = ($urlEncoded ?  $valor : urldecode($valor)  );
-      }
-   }
-   // ahora añadir los nuevos
-   if ( $nuevas ){
-      foreach ( $nuevas as $variable => $valor){
-        $resul[$variable] = ($urlEncoded ?  urlencode($valor) : $valor );
-      }
-   }
-   return $resul;
+
+function mQueryStringToArray ( $q=-1) {
+    if ( $q===-1) {
+        $q= $_SERVER["QUERY_STRING"];
+    }
+    $resul= array();
+    if ( strpos ($q,"=") !== false ){
+        $pares= explode("&",$q);    
+        foreach ($pares as $par ){
+            list($variable,$valor)=explode("=",$par);
+            $resul[$variable] = urldecode($valor);
+        }
+    }
+    return $resul;
 }
 
-function mQueryStringDel ($borrar, $urlEncoded=true){
-   // convertir en array
-   $resul = array(); 
-   if ( $q = $_SERVER["QUERY_STRING"]){
-      $pares= explode("&",$q);
-      foreach ($pares as $par ){
-        list($variable,$valor)=explode("=",$par);
-        if ( !in_array ($variable, $borrar) ){
-           $resul[$variable] = ($urlEncoded ?  $valor : urldecode($valor)  );
-        }
-      }
+function mQueryStringFromArray ($pares) {
+    $resul ="";    
+    foreach ( $pares as $i=>$v){      
+        $resul .= ( $resul ? "&" : "" ) . $i . "=". urlencode($v);                
+    }
+    return $resul;
+    }
+
+function mQueryStringAdd ($nuevas, $query=-1){   
+   $q= array_merge (mQueryStringToArray($query), $nuevas );      
+   return mQueryStringFromArray($q);
+}
+
+function mQueryStringDel ($borrar, $query=-1){
+   $q= mQueryStringToArray($query);
+   foreach ($borrar as $clave ){
+        unset( $q[$clave] );
    }
-   return $resul;
+   return mQueryStringFromArray($q);
 }
 
 
@@ -458,6 +468,11 @@ function paginaHTML($cMensaje, $title='ERROR', $css=''){
           ($css ? "<link rel='stylesheet' href='$css'>" : "" ) ."</head>".
           "<body>$cMensaje</body></html>";
 }
+
+function mensajeHTML ( $texto, $tipo="OK" ) {
+   return  "\n<div class='mensaje-{$tipo}'>$texto</div>\n";                         
+}
+
 
 /** 
 *
@@ -524,10 +539,11 @@ function lista(){
 
 function mimplode ($patron, $array, $separador = "") {
 
-    foreach ($array as $elemento) {
-        $cRet .= $sep.sprintf($patron, $elemento);
+    foreach ($array as $k=>$valor) {
+        $cRet .= $sep . sprintf($patron, $k, $valor);
         $sep = $separador;
     }
+    
     return $cRet;
 }
 
@@ -708,7 +724,7 @@ function mysql_template( $cSQL , $cTemplate, $cNoHay="" ){
      }     
      
      $lerroa [ "contador"] =  $contador ;
-     $lerroa [ "par"]          =  ( $par ? "even" : "odd" ) ;      
+     $lerroa [ "par"]          =  ( $par ? "par" : "impar" ) ;      
      foreach ( $lerroa as $k=>$valor ){                  
        $sustituciones [ "%[$k]" ] = $valor ;                     
      }       
@@ -756,7 +772,7 @@ function mysql_template( $cSQL , $cTemplate, $cNoHay="" ){
   
   /* Correcciones finales */ 
   $cRet = str_replace  ("%%" , "%", $cRet );  
-  
+    
   return $cRet;
 } 
 

@@ -8,6 +8,7 @@
  *
  * 
  * Cambios
+ * 2010/09/29 querystring
  * 2010/09/27 correciones y ampliaciones.
  *            clases para los enlaces de paginación.
  *            paginacion ahora admite un nuevo argumento: querystring.
@@ -21,11 +22,20 @@
  *	
  */
 
+include_once "funciones.php";
 
-
-function _paginacion_base($queryString){
+function _paginacion_base($queryString ="" ){
    
-   $cQuery= preg_replace("#(&?paginaActual=[0-9]*)#ui","", ( $queryString ? $queryString : $_SERVER['QUERY_STRING']) );             
+   if ( $queryString ) {
+       if ( is_string ($queryString) ){
+           $queryString = mQueryStringToArray($queryString);
+       }
+       $q= mQueryStringAdd ($queryString);
+   } else {
+       $q= $_SERVER['QUERY_STRING'];
+   }
+   
+   $cQuery = preg_replace("#(&?paginaActual=[0-9]*)#ui","", $q );   
    $cUrl= pathinfo( $_SERVER['PHP_SELF']);
    
    return $cUrl["basename"]. "?". ($cQuery==""? "" : $cQuery."&amp;" );
@@ -87,8 +97,9 @@ function paginacion( $cSql, $leyenda, $tamPagina=10, $maxIndex=10, $leyendaPagin
                    $cTemp .= $aTemp[ trim ( $tCampo ) ] . " ";
                 }
                 $aLeyendas[$npag-1] .= " - $cTemp";            
-                $aLeyendas[$npag] = $cTemp;                                    
-                mysql_data_seek ( $rsTemp, $npag*$tamPagina);
+                $aLeyendas[$npag] = $cTemp;
+                /* TODO mirar error */                                    
+                @mysql_data_seek ( $rsTemp, $npag*$tamPagina);
                 $npag++;
             }
             
