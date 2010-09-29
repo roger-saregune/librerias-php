@@ -6,8 +6,12 @@
  * @author    Roger
  * @copyright Saregune
  * @license   GPL
- * @version   26-Febrero-2010
+ * @version   28-Junio-2010
  *
+ * 2010-06-29 a maquetador_ajax
+ * 2010-06-29 c maquetador_carga_modulos.
+ * 2010-06-28 maquetador_enlace: ahora el primer parámetro puede ser un array.
+ * 2010-06-28 maquetador_estado
  * 2010-05-19 maquetador_enlace con nuevo parámetro
  * 2010-05-11 + maquetador_buscador
  * 2010-04-30 + maquetador_esHome
@@ -87,9 +91,9 @@ function maquetador_precarga_modulos( $path="./modulos") {
 function maquetador_carga_modulos() {
     global $aEstado;
     if ( is_array( $aEstado["modulos"]) ){
-	    foreach ( $aEstado["modulos"] as $cModulo=>$cargado  ) {
-	        if ( $lCargado ) {
-	            include_once ( $cargado ); //se puede cargar sin if ya que es include_once
+	    foreach ( $aEstado["modulos"] as $cModulo=>$nombreReal  ) {
+	        if ( $nombreReal ) {	             
+	            include_once ( $nombreReal ); //se puede cargar sin if ya que es include_once
 	            $aEstado["modulos"][$cModulo] = false;
 	        }	        
 	    }	    
@@ -119,6 +123,10 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
 	 }
 
     // leer la plantilla
+    if ( !file_exists($plantilla) ) {
+      echo t("No exista la plantilla: [$plantilla]");
+      return false;    
+    }
     $html     = maquetador_insertar_include ( $plantilla );       
     $aGenerar = maquetador_extraer_marcas ( $html );
 
@@ -179,6 +187,26 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
 
 }
 
+/* 
+ *
+ */
+ 
+function maquetador_ajax ( $modulo, $accion , $id ){
+	global $aEstado;
+   // hacemos la petición via ajax   
+   maquetador_precarga_modulos();   
+   
+   if ( !isset($aEstado["modulos"][$modulo]) ) {
+   	return "controlador desconocido";   	 
+   }
+   
+   $file = $aEstado["modulos"][$modulo];
+   if ($file) {
+      include_once ( $file );
+   }
+   return call_user_func ( $modulo, $accion, $id );    
+}
+
 
 /*
  * funciones auxiliares para maquetar enlaces y formularios 
@@ -233,10 +261,33 @@ function maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional=""
  */
 
 
-function maquetador_enlace( $texto, $c, $a, $i="", $marcador="" , $adicional="", $paras="") {
-    $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "$paras' $adicional >$texto</a>";
-    if ( $marcador !='') {
-        $cRet = cerrar_etiquetas( $marcador, $cRet);
+function maquetador_enlace( $texto, $c="", $a="", $i="", $marcador="" , $adicional="", $paras="") {
+    if ( is_array( $texto) ){
+		     
+       $tempPara      = ( is_array($texto['parametros']) ? 
+       							mImplode( "%s=%s",$texto['parametros'], "&amp;" ):      
+         					   $texto['parametros'] );
+		 $tempAdicional = ( is_array($texto['adicional']) ? 
+       							mImplode( "%s='%s' ",$texto['adicional'] ):      
+         					   $texto['adicional'] );         					   						
+    	 
+    	 $cRet =  sprintf ("<a href='%s?%s%s%s%s'%s>%s</a>" ,
+    	 			 ( isset($texto['pagina'])     ? "{$texto[pagina]}" : "" ),
+    	          ( isset($texto['controlador'])? "c={$texto[controlador]}" : "" ),
+					 ( isset($texto['accion'])     ? "&amp;a={$texto[accion]}" : "" ),    	              	       
+    	          ( isset($texto['id'])         ? "&amp;i={$texto[id]}"     : "" ) ,
+    	          ( isset($texto['parametros']) ? "&amp;$tempPara" : "" ), 
+    	          ( isset($texto['adicional'])  ? " $tempAdicional" : "" ),
+    	          ( isset($texto['texto'])      ? "{$texto[texto]}" : "" ) );  	          
+	    if ( isset ($texto["etiqueta"]) ) {
+	        $cRet = cerrar_etiquetas( $texto["etiqueta"], $cRet);
+	    }
+    
+    } else {
+	    $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "&amp;$paras' $adicional >$texto</a>";
+	    if ( $marcador !='') {
+	        $cRet = cerrar_etiquetas( $marcador, $cRet);
+	    }
     }
     return $cRet;
 }
@@ -278,6 +329,11 @@ function maquetador_array( $c, $a, $i="" ) {
  * evaluar el estado: decidir controlador, accion e id.
  * interna
  */
+
+function maquetador_estado( $cual){
+   global $aEstado;
+   return $aEstado[$cual];
+}
 
 function maquetador_evaluar_estado( $controlador=false, $accion=false) {
     global $aEstado;

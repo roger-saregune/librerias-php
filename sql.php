@@ -3,8 +3,10 @@
 /**
  * funciones SQL para construir clausulas.
  *
- * @version: 2010/05/28
-*    2010/05/28 sql_codifica ya no se corrigen las fechas. Deben estar en YYYY/mm/dd
+ * @version: 2010/09/29
+ *   2010/09/29 sql_codifica devuelve casi siempre '' salvo enteros y numeros
+ *            
+ *   2010/05/28 sql_codifica ya no se corrigen las fechas. Deben estar en YYYY/mm/dd
  *   2010/05/13 sql_add con cadena por defecto
  *   2008/02/13 ampliado sql_junta
  *   2006/06/30 Añadido sql_esvacia
@@ -60,12 +62,6 @@ function sql_codifica ( $cValor, $cTipo ){
 // calcular el nuevo tipo
 
 switch ( strtolower ( $cTipo )){
-   case "listafuncioncadena":
-	case "listavalores":		
-	case "cadena":
-	case "texto" :
-      return "'$cValor'";
-      break;
 	
 	case "fecha" :
 	case "fechahoy":
@@ -80,9 +76,11 @@ switch ( strtolower ( $cTipo )){
 		break;
    
 	case "numero" :
-	case "entero" :
-	default:
+	case "entero" :    
 		return ($cValor=="" ? "0" : $cValor);
+
+	default:
+		return ($cValor=="" ? "''" : "'$cValor'");
 	break;
 }
 return "";

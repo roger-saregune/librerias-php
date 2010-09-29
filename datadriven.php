@@ -1067,14 +1067,14 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
    		case "readonly":
    			break;
 
-		   case "adjunto":
+		case "adjunto":
    		case "imagen" :
    		case "irudia" :
             if ( $_REQUEST[ $aDatos["campo"]."_BORRAR"]=='1' || $_REQUEST[ $aDatos["campo"]."_EZABATU"]=='1' ){
                sql_add($aSQL,  $aDatos["campo"], "", "cadena");
             } else {
 				   $lPendiente = true;
-				}
+			}
    			break;
 
    		case "nuevopassword":
