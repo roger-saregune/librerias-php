@@ -4,11 +4,12 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2010-06-13
+ * @version 2010-09-30
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
  *
  * Correcciones
+ *  2010/09/30 Añadido (again) siguienteAccion en ddlib_edicion.
  *  2010/09/27 Corregido: paginacion ahora con querystring como variable.
  *             correciones en el password.
  * 20010/06/29 + ddlib_salvar. Como el guardar, pero con un orden lógico de argumentos.
@@ -797,6 +798,13 @@ if ( isset($aOpciones["hidden"]) ) {
 	}
 }
 
+if ( isset($aOpciones["siguienteAccion"]) ) {
+   $temp = array ( "c", "a", "i", "order", "PaginaActual") ;
+	foreach ( $aOpciones["siguienteAccion"] as $i=>$value )  {
+		$cHidden .= "<input type='hidden' name='". $temp[$i] . "' value='$value' />\n";
+	}
+}
+
 
 // se revisan los campos para ver ocultos, obligatorios y demás
 foreach ( $aTabla as $k=>$dd) {
@@ -951,7 +959,7 @@ return $cResul;
  * Verificar un campo
  */
 
-function dd1_verificaCampo( $aDatos ){
+function dd_verificaCampo( $aDatos ){
    if ( !isset($aDatos["verifica"]) ) {
       return "" ;
    }
