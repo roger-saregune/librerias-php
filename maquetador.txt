@@ -15,11 +15,6 @@ aparecería:
 El contenido solicitado por el usario se genera en etiqueta: <%contenido%>. Para saber que ha solicitado, se examina $_REQUEST,
 valor (c-controlador/modulo, a-acción, i-id).
 
-
-
-
-
-
 Las marcas son:
 
 <%include fichero %>
@@ -56,25 +51,37 @@ FUNCIONES BÁSICAS DEL MAQUETADOR
 
 maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false) {
 Genera la página usando $plantilla, y usando para el contenido el controlador por defecto y la
-acción, si se indican.
-Esta función llama, si es necesario, a maquetador_evaluar_estado, y maquetador_precarga_modulos
+acción, si se indican. Si es necesario, a maquetador_evaluar_estado, y maquetador_precarga_modulos.
+
+Para generar una página bastaria con:
+
+---index.php ---
+//leer configuraciones.
+
+//establecer conexión.
+
+maquetador_genera ("plantillas/index.tpl", "home","home");
+
 
 maquetador_evaluar_estado( $controlador=false, $accion=false)
-Evalua el estado, esto es, que contenido se tiene que generar: si estamos o no en la home, si tenemos
-controlador o acción o se usan los de por defecto.
+Evalua el estado: que contenido se tiene que generar, si estamos o no en la home, si tenemos
+controlador o acción o se usan los de por defecto..
 
 maquetador_precarga_modulos( $path="./modulos") {
 Precarga los modulos. Aquellos terminados con load.php son cargados siempre, y el resto a demanda (solo si
 el maquetador tiene que generar contenido del modulo ) 
 
 
+
+
 maquetador_script( $accion, $clave, $valor="", $adicional="media") {
-Utilidad para generar guardar y generar contenido especial. Por ejemplo las metas,y los javascript, hay que cargarlas al inicio de la pagina.
-La idea, que puedas anotarlo usando esta función, y despues de genera toda la página, se pueden insertar esta anotaciones.
-Por ejemplo
+Utilidad para generar guardar y generar contenido especial como por ejemplo las metas,y los javascript, que tienen que estar en el cabecera (head) de la página html.
+El funcionamiento es simple: los modulos pueden ir anotando información (metas, css, javascript)
+que posteriormente se imprime junto. 
 
 .. html de un modulo........
 maquetador_script ("añadir", "meta", "keywords", "lorem ipsum");
+
 
 .. index.tpl...
 <head>
@@ -85,7 +92,7 @@ maquetador_script ("añadir", "meta", "keywords", "lorem ipsum");
  
 
 
-FUNCIONES PARA AYUDAR A GENERA WEB
+FUNCIONES PARA AYUDAR A GENERAR WEB
 function maquetador_enlace( $texto, $c, $a, $i="", $marcador="" , $adicional="", $paras="") {
 function maquetador_form( $c, $a, $i="") {
 function maquetador_array( $c, $a, $i="" ) {
@@ -100,4 +107,5 @@ FUNCIONES AUXILIARES DEL PROPIO MAQUETADOR.
  maquetador_lee_fichero ( $path, $cual ) {
  maquetador_insertar_include ( $plantilla ) {
  maquetador_evalua( $condicion) {
- maquetador_carga_modulos() Carga todos los modulos.. 
+ maquetador_carga_modulos() 
+ Carga todos los modulos.. 

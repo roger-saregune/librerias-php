@@ -8,6 +8,14 @@
  * @license   GPL
  * @version   28-Junio-2010
  *
+ * 2010-10-02 Reformateo del código a tab de cuatro espacios.
+ *            c maquetador_script echaba un \n y no un nueva linea
+ *            Mayor claridad en la funcion maquetador_scrip (ahora obsoleta)
+ *            a maquetador_registro_add
+ *            a maquetador_registro_print
+ *            a maquetador_registro (antes _script)
+ *            + icono en la función maquetador_script.
+ *            a maquetador_configurar
  * 2010-06-29 a maquetador_ajax
  * 2010-06-29 c maquetador_carga_modulos.
  * 2010-06-28 maquetador_enlace: ahora el primer parámetro puede ser un array.
@@ -16,13 +24,52 @@
  * 2010-05-11 + maquetador_buscador
  * 2010-04-30 + maquetador_esHome
  * 2010-02-22 c ahora la variable global aEstado, tambien guarda los modulos.
-                solo es necesario llamar a maquetador_genera().
+ solo es necesario llamar a maquetador_genera().
  * 2010-02-26 + maquetador_script
  * 2010-02-25 + las plantillas de include permiten varios niveles y subcarpetas
  * 2010-02-10 a maquetador_evaluar_estado
  * 2008-02-28 a maquetador_enlace
  * 2007-01-17 + Añadida los include de plantillas (un solo nivel)
+ *
+ * @TODO quitar referencias de maquetador_script.
  */
+
+
+
+include_once ("funciones.php");
+
+
+
+
+/*
+ * Configurar el maquetador
+ * las opciones son de momento XHTML (por defecto activo).
+ */
+
+function maquetador_configurar ( $clave, $valor= NULL ){
+        static $registro = array ("XHTML"=>true );
+        if ( !is_null($valor)) {
+            $registro[$clave]=$valor;
+        }
+        return $registro[$clave];
+}
+
+/* Se mantiene por compatibilidad.
+ * @deprecated
+ */
+
+function maquetador_script( $accion, $clave, $valor="", $adicional="all") {
+    return maquetador_registro( $accion, $clave, $valor, $adicional);
+}
+
+
+function maquetador_registro_add( $tipoRegistro, $clave="", $valor="all") {
+    return maquetador_registro( "guardar", $tipoRegistro, $clave, $valor);
+}
+
+function maquetador_registro_print( $tipoRegistro ="*") {
+    return maquetador_registro( "generar", $tipoRegistro);
+}
 
 
 /*
@@ -31,31 +78,35 @@
  *    maquetador_script ( "añadir", "meta", "keys", "a, b,c");
  *    maquetador_script ( "añadir", "script", "googleglub", "http://www.google.com/glub.js");
  *    maquetador_script ( "genera", "todos" );
- */
+*/
 
-function maquetador_script( $accion, $clave, $valor="", $adicional="media") {
+function maquetador_registro( $accion, $tipoRegistro, $clave="", $valor="all") {
     static $aDatos;
-    if ( $accion=="añadir" ) {
-    // primero añadimos las acciones,clave y valor
-        $aDatos[$clave][$valor]= $adicional;
-    } elseif ( $accion == "genera" ) {
-    // ahora generamos cada acción, mediante una plantilla
-    // para crear las etiquetas pertinentes.
+    if ( $accion=="añadir" || $accion=="guardar") {
+        // primero añadimos las acciones,clave y valor
+        $aDatos[$tipoRegistro][$clave]= $valor;
+    } elseif ( $accion == "genera" || $accion=="generar") {
+        // ahora generamos cada acción, mediante una plantilla
+        // para crear las etiquetas pertinentes.
+        $xhtml= ( maquetador_configurar("XHTML") ? "/" : "" );
         $aTemplates = array (
-            "js"     =>'<script type="text/javascript">%2$s</script>\n',
-            "script" =>'<script src="%2$s"  type="text/javascript"></script>\n',
-            "style"  =>'<link rel="stylesheet" href="%s" type="text/css" media="%s">\n',
-            "meta"   =>'<meta name="%s" content="%s">\n' );
+                "js"        =>'<script type="text/javascript">%2$s</script>',
+                "script"    =>'<script src="%2$s"  type="text/javascript"></script>',
+                "style"     =>'<link rel="stylesheet" href="%s" type="text/css" media="%s" '. $xhtml .'>',
+                "http-equiv"=>'<meta http-equiv="%s" content="%s"'. $xhtml .'>',
+                "icono"     =>'<link rel="shortcut icon" href="%s" type="image/x-icon" '. $xhtml .'>',
+                "meta"      =>'<meta name="%s" content="%s"'. $xhtml .'>' );
 
-        if  ( $clave=="todos") {
+
+        if  ( $tipoRegistro=="todos" || $tipoRegistro=="*") {
             foreach ( $aTemplates as $k=>$v ) {
                 $cRet .= maquetador_script("genera",$k );
             }
             return $cRet;
-        } elseif ( isset($aTemplates[$clave]) && isset($aDatos[$clave]) ) {
-            $plantilla = $aTemplates[$clave];
-            foreach ( $aDatos[$clave] as $k=>$v ) {
-                $cRet .= sprintf ( $plantilla, $k, $v );
+        } elseif ( isset($aTemplates[$tipoRegistro]) && isset($aDatos[$tipoRegistro]) ) {
+            $plantilla = $aTemplates[$tipoRegistro];
+            foreach ( $aDatos[$tipoRegistro] as $k=>$v ) {
+                $cRet .= sprintf ( $plantilla, $k, $v ) . "\n";
             }
             return $cRet;
         }
@@ -68,13 +119,13 @@ function maquetador_script( $accion, $clave, $valor="", $adicional="media") {
 
 /*
  * pre-carga los modulos  
- */
+*/
 
 function maquetador_precarga_modulos( $path="./modulos") {
     global $aEstado;
     $nlong = mb_strlen($path)+1;
-    foreach ( glob ("$path/*.php") as $modulo ) {        
-        if ( mb_substr($modulo,-9) =="_load.php" )  {
+    foreach ( glob ("$path/*.php") as $modulo ) {
+        if ( mb_substr($modulo,-9) =="_load.php" ) {
             $aEstado["modulos"][mb_substr($modulo,$nlong,-9)]= false;
             include_once ( $modulo );
         } else {
@@ -87,47 +138,54 @@ function maquetador_precarga_modulos( $path="./modulos") {
 /*
  * carga todos los modulso que no se hayan cargado
  *  
- */
+*/
 function maquetador_carga_modulos() {
     global $aEstado;
-    if ( is_array( $aEstado["modulos"]) ){
-	    foreach ( $aEstado["modulos"] as $cModulo=>$nombreReal  ) {
-	        if ( $nombreReal ) {	             
-	            include_once ( $nombreReal ); //se puede cargar sin if ya que es include_once
-	            $aEstado["modulos"][$cModulo] = false;
-	        }	        
-	    }	    
-	    return true;
-	 }   
-	 return false; 
+    if ( is_array( $aEstado["modulos"]) ) {
+        foreach ( $aEstado["modulos"] as $cModulo=>$nombreReal  ) {
+            if ( $nombreReal ) {
+                include_once ( $nombreReal ); //se puede cargar sin if ya que es include_once
+                $aEstado["modulos"][$cModulo] = false;
+            }
+        }
+        return true;
+    }
+    return false;
 
 }
 
 /*
  * Genera la maqueta final. Lee la plantilla y va insertando las 
  * marcas.  
- */
+*/
 
-function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false) {
+function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false, $configuracion=false) {
     global $aEstado ;
-    
+
     $pendientes = false;
 
-	 // precarga de modulos
-	 if ( !is_array($aEstado) ){         
-	    maquetador_evaluar_estado($controladorDefecto, $accionDefecto);	 
-	 }
-	 
-	 if ( !isset($aEstado["modulos"]) ){
-	    maquetador_precarga_modulos();
-	 }
+    // Configurar
+    if ( is_array($configuracion)){
+        foreach ( $configuracion as $k=>$v){
+            maquetador_configurar ($k,$v);
+        }
+    }
+
+    // precarga de modulos
+    if ( !is_array($aEstado) ) {
+        maquetador_evaluar_estado($controladorDefecto, $accionDefecto);
+    }
+
+    if ( !isset($aEstado["modulos"]) ) {
+        maquetador_precarga_modulos();
+    }
 
     // leer la plantilla
     if ( !file_exists($plantilla) ) {
-      echo t("No exista la plantilla: [$plantilla]");
-      return false;    
+        echo t("No exista la plantilla: [$plantilla]");
+        return false;
     }
-    $html     = maquetador_insertar_include ( $plantilla );       
+    $html     = maquetador_insertar_include ( $plantilla );
     $aGenerar = maquetador_extraer_marcas ( $html );
 
     foreach ( $aGenerar as $marca=>$contenido ) {
@@ -149,13 +207,13 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
         if ( $modulo == "t") {
             $aGenerar[$marca] = t($aDatos["accion"]);
         } else {
-        // ver si es un modulo
+            // ver si es un modulo
             if ( $modulo!="PUT" and $modulo!="PHP" and !isset( $aEstado["modulos"][$modulo]) ) {
                 $aGenerar[$marca] = "controlador desconocido: $modulo";
             } else {
-            // si inserta el modulo si cumple la condición
+                // si inserta el modulo si cumple la condición
                 if ( $aDatos['condicional']=="" or maquetador_evalua ( $aDatos['condicional'])) {
-                // hay que mostrar el modulo
+                    // hay que mostrar el modulo
                     switch ( $modulo ) {
                         case "PUT":
                             $aGenerar[$marca] = $aDatos["accion"];
@@ -181,45 +239,46 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
             $aGenerar[$k] = maquetador_script("genera", $accion );
         }
     }
-    
-    // ahorita solo queda calcular e imprimir el resultado    
+
+    // ahorita solo queda calcular e imprimir el resultado
     echo strtr ( $html, $aGenerar );
 
 }
 
 /* 
  *
- */
- 
-function maquetador_ajax ( $modulo, $accion , $id ){
-	global $aEstado;
-   // hacemos la petición via ajax   
-   maquetador_precarga_modulos();   
-   
-   if ( !isset($aEstado["modulos"][$modulo]) ) {
-   	return "controlador desconocido";   	 
-   }
-   
-   $file = $aEstado["modulos"][$modulo];
-   if ($file) {
-      include_once ( $file );
-   }
-   return call_user_func ( $modulo, $accion, $id );    
+*/
+
+function maquetador_ajax ( $modulo, $accion , $id ) {
+    global $aEstado;
+    // hacemos la petición via ajax
+    maquetador_precarga_modulos();
+
+    if ( !isset($aEstado["modulos"][$modulo]) ) {
+        return "controlador desconocido";
+    }
+
+    $file = $aEstado["modulos"][$modulo];
+    if ($file) {
+        include_once ( $file );
+    }
+    return call_user_func ( $modulo, $accion, $id );
 }
 
 
 /*
  * funciones auxiliares para maquetar enlaces y formularios 
  *   
- */
+*/
 
-function maquetador_buscador ( $controlador, $accion, $i='i') {   
-   if ( $value= limpiaRequest ($i) ){   
-      $value =  "value='$value'";
-   }
-    
-   return   "<form>" . t("Buscar") .": <input name='$i' type='text' $value>" .
-            "<input type='hidden' name='c' value='$controlador'>\n". 
+function maquetador_buscador ( $controlador, $accion, $i='i') {
+    $value= limpiaRequest ($i);
+    if ( $value ) {
+        $value =  "value='$value'";
+    }
+
+    return   "<form>" . t("Buscar") .": <input name='$i' type='text' $value>" .
+            "<input type='hidden' name='c' value='$controlador'>\n".
             "<input type='hidden' name='a' value='$accion'>\n".
             "</form>";
 }
@@ -258,36 +317,36 @@ function maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional=""
 
 /*
  * Construir un enlace 
- */
+*/
 
 
 function maquetador_enlace( $texto, $c="", $a="", $i="", $marcador="" , $adicional="", $paras="") {
-    if ( is_array( $texto) ){
-		     
-       $tempPara      = ( is_array($texto['parametros']) ? 
-       							mImplode( "%s=%s",$texto['parametros'], "&amp;" ):      
-         					   $texto['parametros'] );
-		 $tempAdicional = ( is_array($texto['adicional']) ? 
-       							mImplode( "%s='%s' ",$texto['adicional'] ):      
-         					   $texto['adicional'] );         					   						
-    	 
-    	 $cRet =  sprintf ("<a href='%s?%s%s%s%s'%s>%s</a>" ,
-    	 			 ( isset($texto['pagina'])     ? "{$texto[pagina]}" : "" ),
-    	          ( isset($texto['controlador'])? "c={$texto[controlador]}" : "" ),
-					 ( isset($texto['accion'])     ? "&amp;a={$texto[accion]}" : "" ),    	              	       
-    	          ( isset($texto['id'])         ? "&amp;i={$texto[id]}"     : "" ) ,
-    	          ( isset($texto['parametros']) ? "&amp;$tempPara" : "" ), 
-    	          ( isset($texto['adicional'])  ? " $tempAdicional" : "" ),
-    	          ( isset($texto['texto'])      ? "{$texto[texto]}" : "" ) );  	          
-	    if ( isset ($texto["etiqueta"]) ) {
-	        $cRet = cerrar_etiquetas( $texto["etiqueta"], $cRet);
-	    }
-    
+    if ( is_array( $texto) ) {
+
+        $tempPara      = ( is_array($texto['parametros']) ?
+                mImplode( "%s=%s",$texto['parametros'], "&amp;" ):
+                $texto['parametros'] );
+        $tempAdicional = ( is_array($texto['adicional']) ?
+                mImplode( "%s='%s' ",$texto['adicional'] ):
+                $texto['adicional'] );
+
+        $cRet =  sprintf ("<a href='%s?%s%s%s%s'%s>%s</a>" ,
+                ( isset($texto['pagina'])     ? "{$texto[pagina]}" : "" ),
+                ( isset($texto['controlador'])? "c={$texto[controlador]}" : "" ),
+                ( isset($texto['accion'])     ? "&amp;a={$texto[accion]}" : "" ),
+                ( isset($texto['id'])         ? "&amp;i={$texto[id]}"     : "" ) ,
+                ( isset($texto['parametros']) ? "&amp;$tempPara" : "" ),
+                ( isset($texto['adicional'])  ? " $tempAdicional" : "" ),
+                ( isset($texto['texto'])      ? "{$texto[texto]}" : "" ) );
+        if ( isset ($texto["etiqueta"]) ) {
+            $cRet = cerrar_etiquetas( $texto["etiqueta"], $cRet);
+        }
+
     } else {
-	    $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "&amp;$paras' $adicional >$texto</a>";
-	    if ( $marcador !='') {
-	        $cRet = cerrar_etiquetas( $marcador, $cRet);
-	    }
+        $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "&amp;$paras' $adicional >$texto</a>";
+        if ( $marcador !='') {
+            $cRet = cerrar_etiquetas( $marcador, $cRet);
+        }
     }
     return $cRet;
 }
@@ -295,19 +354,19 @@ function maquetador_enlace( $texto, $c="", $a="", $i="", $marcador="" , $adicion
 
 /*
  * Campos input necesarios para que un formulario se rediriga 
- */
+*/
 
 function maquetador_form( $c, $a, $i="") {
     return "<input type='hidden' name='c' value='$c' />\n" .
-        "<input type='hidden' name='a' value='$a' />\n" .
-        ( $i=="" ? "" : "<input type='hidden' name='i' value='$i' />\n");
+            "<input type='hidden' name='a' value='$a' />\n" .
+            ( $i=="" ? "" : "<input type='hidden' name='i' value='$i' />\n");
 }
 
 
 /*
  * array para datadriven
  * @deprecated 
- */
+*/
 function maquetador_array( $c, $a, $i="" ) {
     $aTemp = array ( "c" =>$c, "a" => $a  );
     if ( $i!="") {
@@ -321,18 +380,18 @@ function maquetador_array( $c, $a, $i="" ) {
 /*
  * resto son funciones internas
  *
- */
+*/
 
 
 
 /*
  * evaluar el estado: decidir controlador, accion e id.
  * interna
- */
+*/
 
-function maquetador_estado( $cual){
-   global $aEstado;
-   return $aEstado[$cual];
+function maquetador_estado( $cual) {
+    global $aEstado;
+    return $aEstado[$cual];
 }
 
 function maquetador_evaluar_estado( $controlador=false, $accion=false) {
@@ -340,25 +399,25 @@ function maquetador_evaluar_estado( $controlador=false, $accion=false) {
 
     // Cargar el estado o petición
     $aEstado = array (
-        "controlador" => por_defecto($_REQUEST["c"], $controlador, $_GLOBALS["HOME_CONTROLADOR"]),
-        "accion"      => por_defecto($_REQUEST["a"], $accion     , $_GLOBALS["HOME_ACCION"]),
-        "id" 	      => $_REQUEST["i"],
-        "pagina"      => $_REQUEST["p"],
-        "order"       => $_REQUEST["order"],
-        "orderby"     => $_REQUEST["orderby"],
-        "esHome"      => $_REQUEST["c"]==""  );
+            "controlador" => por_defecto($_REQUEST["c"], $controlador, $_GLOBALS["HOME_CONTROLADOR"],"home"),
+            "accion"      => por_defecto($_REQUEST["a"], $accion     , $_GLOBALS["HOME_ACCION"],"index"),
+            "id" 	      => $_REQUEST["i"],
+            "pagina"      => $_REQUEST["p"],
+            "order"       => $_REQUEST["order"],
+            "orderby"     => $_REQUEST["orderby"],
+            "esHome"      => $_REQUEST["c"]==""  );
 }
 
 /* 
  * Devuelve un array con todas las marcas de inserción (<%..%>) 
  * que contiene una cadena.
  * interna
- */
+*/
 
 function maquetador_extraer_marcas( $cadena ) {
     $aRet = array();
     $aRet["<%contenido%>"] = ""; // contenido debe ser la primera acción a realizar
-	/* @TODO usar preg_match_all */
+    /* @TODO usar preg_match_all */
     while ( preg_match ( "/<%(.*)*%>/Ui", $cadena, $aTemp )) {
         $aRet[$aTemp[0]]="";
         $cadena = str_replace ( $aTemp[0], "", $cadena );
@@ -372,18 +431,18 @@ function maquetador_extraer_marcas( $cadena ) {
 /*
  * Devuelve un array con las claves modulo, accion y id extraidas 
  * de una marca de inserción ( por ej: <%modulo(accion,id)%> ).
- */
+*/
 
 function maquetador_extrae_modulo( $cadena ) {
-   /* @TODO mejorar expresiones regulares para dobles espacios */
+    /* @TODO mejorar expresiones regulares para dobles espacios */
     $cadena = strtr ( $cadena, array ("<%"=>"", "%>"=>"" ));
     $cuando = "";
 
     if ( preg_match ( '/WHEN ([^ ]*) (PUT|PHP) (.*)/i' , $cadena, $aTemp ) ) {
         return array (
-        "modulo"      => $aTemp[2],
-        "accion"      => $aTemp[3],
-        "condicional" => $aTemp[1] );
+                "modulo"      => $aTemp[2],
+                "accion"      => $aTemp[3],
+                "condicional" => $aTemp[1] );
     } elseif ( preg_match ( "/WHEN (CONTROLADOR:(?:[^ ]*)(?: ACCION:(?:[^ ].*))?) (.*)/i", $cadena, $aTemp ) ) {
         $cuando = $aTemp[1];
         $cadena = $aTemp[2];
@@ -395,20 +454,21 @@ function maquetador_extrae_modulo( $cadena ) {
         $cadena = $aTemp[1];
     } elseif ( preg_match ( '/ONCE (.*)/i' , $cadena, $aTemp ) ) {
         $cuando = "once " .$aTemp[1] ;
-        $cadena = $aTemp[1];}
+        $cadena = $aTemp[1];
+    }
 
     $aTemp =  preg_split ( "#[,\(\)]#", $cadena);
     return array (
-    "modulo"      => $aTemp[0],
-    "accion"      => $aTemp[1],
-    "id"          => $aTemp[2],
-    "condicional" => $cuando );
+            "modulo"      => $aTemp[0],
+            "accion"      => $aTemp[1],
+            "id"          => $aTemp[2],
+            "condicional" => $cuando );
 }
 
 
 /* 
  * includes 
- */
+*/
 
 function maquetador_lee_fichero ( $path, $cual ) {
     if  ( preg_match ("/<%include [\'\"]?([^ \'\"]*)[\'\"]? ?%>/", $cual, $aTemp )) {
@@ -436,7 +496,7 @@ function maquetador_insertar_include ( $plantilla ) {
 /*
  * Evalua una clausula WHEN que puede ser:
  * home, 'modulo', o 'funcion'()
- */
+*/
 
 function maquetador_evalua( $condicion) {
     global $aEstado;
@@ -447,7 +507,6 @@ function maquetador_evalua( $condicion) {
     if ( substr( $condicion,0,5)=="once " ) {
         return ($_SESSION["ONCE"][substr( $condicion,5)]++ == 0 ) ;
     }
-
 
     if (  preg_match ( "/controlador:([^ ]*)( accion:([^ ].*))?/", $condicion, $aTemp )) {
         switch (count($aTemp)) {
@@ -465,7 +524,7 @@ function maquetador_evalua( $condicion) {
 
 
 
-function maquetador_esHome(){
- global $aEstado;
- return $aEstado["esHome"];
+function maquetador_esHome() {
+    global $aEstado;
+    return $aEstado["esHome"];
 }
