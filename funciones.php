@@ -4,9 +4,10 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2010-09-29
+  * @version 2011-03-1
   * @licence GPL
 
+  * 2011/03/01 Añadio js_confirm (again)
   * 2010/09/29 Repaso de mqueryString. 
   *            + mquerystringToArray
   *            + mquerystringFromArray
@@ -462,6 +463,10 @@ function mRequest_id($cCual='ID'){
 *   F U N C I O N E S      DE      A V I S O
 *
 */
+
+function js_confirm ($texto) {
+   return " onclick=\"return confirm('". t($texto) . "');\" ";
+}
 
 function paginaHTML($cMensaje, $title='ERROR', $css=''){
    return "<html><head><title>$title</title>" .

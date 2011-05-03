@@ -591,13 +591,20 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
 
        case "imagen":
        case "irudia":
+            if ( $dd["maximo"] ) {
+               $maximo = min ( $dd["maximo"] , ini_get("upload_max_filesize"));
+            } else {
+               $maximo = ini_get("upload_max_filesize");
+            }
+            $adicional = "<span class='tamanno-max'>(MAX: $maximo bytes)</span>" ;
+       
            if ( $campo ) {
                $visualizar = "<img src='./{$aParametros[1]}/$campo' class='irudia' /><br/>";
                $visualizar.=  t("Cambiar  imagen: "). "<input type='file' $atributos />\n</br/>";
                $visualizar.=  t("Borrar imagen: "). "<input type='checkbox' name='{$dd[campo]}_BORRAR' value='1' />";
            } else {
                $visualizar.= t("Sin imagen") ."<br/>";
-               $visualizar.= t("Nueva  imagen: ").  "<input type='file' $atributos />";
+               $visualizar.= t("Nueva  imagen: ").  "<input type='file' $atributos file='$maximo'/>$adicional";
            }
            return $visualizar;
 

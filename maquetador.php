@@ -6,8 +6,11 @@
  * @author    Roger
  * @copyright Saregune
  * @license   GPL
- * @version   28-Junio-2010
+ * @version   14-Enero-2011
  *
+ * 2011-01-14 c maquetador_enlace que añadir &amp al final
+ * 2010-10-05 añadido maquetador_registro js-post y elementos.
+ *            a maquetador_elemento
  * 2010-10-02 Reformateo del código a tab de cuatro espacios.
  *            c maquetador_script echaba un \n y no un nueva linea
  *            Mayor claridad en la funcion maquetador_scrip (ahora obsoleta)
@@ -32,13 +35,13 @@
  * 2007-01-17 + Añadida los include de plantillas (un solo nivel)
  *
  * @TODO quitar referencias de maquetador_script.
+ * @TODO sustituir el array global $estado por una variable estática
+ * @TODO usar una clase en vez de funciones. 
+ * 
  */
 
 
-
 include_once ("funciones.php");
-
-
 
 
 /*
@@ -62,11 +65,24 @@ function maquetador_script( $accion, $clave, $valor="", $adicional="all") {
     return maquetador_registro( $accion, $clave, $valor, $adicional);
 }
 
+/* Añade un valor al registro.
+ * $tipoRegistro es js, script, style, http-equiv, icono o meta
+ */
+
+function maquetador_elemento ( $elemento, $valor, $concatenar=true){
+    return maquetador_registro ("añadir",
+                                ( $concatenar ? "elemento": "elemento-nuevo"),
+                                $elemento,
+                                $valor);
+}
+
+
 
 function maquetador_registro_add( $tipoRegistro, $clave="", $valor="all") {
     return maquetador_registro( "guardar", $tipoRegistro, $clave, $valor);
 }
 
+/* imprime los valores del registro */
 function maquetador_registro_print( $tipoRegistro ="*") {
     return maquetador_registro( "generar", $tipoRegistro);
 }
@@ -82,37 +98,67 @@ function maquetador_registro_print( $tipoRegistro ="*") {
 
 function maquetador_registro( $accion, $tipoRegistro, $clave="", $valor="all") {
     static $aDatos;
-    if ( $accion=="añadir" || $accion=="guardar") {
-        // primero añadimos las acciones,clave y valor
-        $aDatos[$tipoRegistro][$clave]= $valor;
-    } elseif ( $accion == "genera" || $accion=="generar") {
-        // ahora generamos cada acción, mediante una plantilla
-        // para crear las etiquetas pertinentes.
-        $xhtml= ( maquetador_configurar("XHTML") ? "/" : "" );
-        $aTemplates = array (
-                "js"        =>'<script type="text/javascript">%2$s</script>',
-                "script"    =>'<script src="%2$s"  type="text/javascript"></script>',
-                "style"     =>'<link rel="stylesheet" href="%s" type="text/css" media="%s" '. $xhtml .'>',
-                "http-equiv"=>'<meta http-equiv="%s" content="%s"'. $xhtml .'>',
-                "icono"     =>'<link rel="shortcut icon" href="%s" type="image/x-icon" '. $xhtml .'>',
-                "meta"      =>'<meta name="%s" content="%s"'. $xhtml .'>' );
+    switch ($accion) {
+        case "añadir" :
+        case "guardar":
+            // primero añadimos las acciones,clave y valor
+            switch ( $tipoRegistro){
+                case "elemento":
+                    $aDatos["elemento"][$clave].= $valor;
+                    break;
+
+                case "elemento-nuevo":
+                    $aDatos["elemento"][$clave]= $valor;
+                    break;
+
+                default: 
+                    $aDatos[$tipoRegistro][$clave]= $valor;
+            }
+            break;
+        
+        case "genera":
+        case "generar":
+            // ahora generamos cada acción, mediante una plantilla
+            // para crear las etiquetas pertinentes.
+            $xhtml= ( maquetador_configurar("XHTML") ? "/" : "" );
+            $aTemplates = array (
+                    "js"        =>'<script type="text/javascript">%2$s</script>',
+                    "js-post"   =>'<script type="text/javascript">%2$s</script>',
+                    "script"    =>'<script src="%2$s"  type="text/javascript"></script>',
+                    "style"     =>'<link rel="stylesheet" href="%s" type="text/css" media="%s" '. $xhtml .'>',
+                    "http-equiv"=>'<meta http-equiv="%s" content="%s"'. $xhtml .'>',
+                    "icono"     =>'<link rel="shortcut icon" href="%s" type="image/x-icon" '. $xhtml .'>',
+                    "meta"      =>'<meta name="%s" content="%s"'. $xhtml .'>' );
 
 
-        if  ( $tipoRegistro=="todos" || $tipoRegistro=="*") {
-            foreach ( $aTemplates as $k=>$v ) {
-                $cRet .= maquetador_script("genera",$k );
+            if  ( $tipoRegistro=="todos" || $tipoRegistro=="*") {
+                // se imprimen todos salvo elementos y js-post.
+                foreach ( $aTemplates as $k=>$v ) {
+                    if ( $k != "js-post" ) {
+                        $cRet .= maquetador_script("genera",$k );
+                    }
+                }
+                return $cRet;
+            } elseif ( isset($aTemplates[$tipoRegistro]) && isset($aDatos[$tipoRegistro]) ) {
+                $plantilla = $aTemplates[$tipoRegistro];
+                foreach ( $aDatos[$tipoRegistro] as $k=>$v ) {
+                    $cRet .= sprintf ( $plantilla, $k, $v ) . "\n";
+                }
+                return $cRet;
+            } elseif  ( isset($aDatos["elemento"][$tipoRegistro])){ 
+                // se añade un elemento con div, li o dt
+                $cTemp = $aDatos["elemento"][$tipoRegistro];
+                $cTag = strtolower(substr($cTemp,0,4));
+                if ( $cTag=="<li>" || $cTag=="<li ") {
+                    return "<ul id='$tipoRegistro'>$cTemp</ul>";
+                } elseif ( $cTag=="<dt>" || $cTag=="<dt " || $cTag=="<dd>" || $cTag=="<dd ") {
+                    return "<dl id='$tipoRegistro'>$cTemp</dl>";
+                } else {
+                    return "<div id='$tipoRegistro'>$cTemp</div>";
+                }
             }
-            return $cRet;
-        } elseif ( isset($aTemplates[$tipoRegistro]) && isset($aDatos[$tipoRegistro]) ) {
-            $plantilla = $aTemplates[$tipoRegistro];
-            foreach ( $aDatos[$tipoRegistro] as $k=>$v ) {
-                $cRet .= sprintf ( $plantilla, $k, $v ) . "\n";
-            }
-            return $cRet;
         }
-        return "";
-    }
-
+    return "";  
 }
 
 
@@ -236,7 +282,7 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
 
     if ( $pendientes ) {
         foreach ( $pendientes as $k=>$accion) {
-            $aGenerar[$k] = maquetador_script("genera", $accion );
+            $aGenerar[$k] = maquetador_registro_print($accion);
         }
     }
 
@@ -343,7 +389,7 @@ function maquetador_enlace( $texto, $c="", $a="", $i="", $marcador="" , $adicion
         }
 
     } else {
-        $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . "&amp;$paras' $adicional >$texto</a>";
+        $cRet =  "<a href='?c=$c&amp;a=$a" . ( $i!="" ? "&amp;i=$i" : "" ) . ( $paras ? "&amp;$paras'": "'" ) . ( $adicional ? " $adicional": "" ) .">$texto</a>";
         if ( $marcador !='') {
             $cRet = cerrar_etiquetas( $marcador, $cRet);
         }

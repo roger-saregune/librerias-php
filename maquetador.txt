@@ -1,31 +1,48 @@
+/*
+ * maquetador.txt
+ * 
+ * Documentación del maquetador.
+ * 
+ * @version 14/enero/2010
+ * @author roger
+ */
+ 
+
 
 MAQUETADOR
 ==========
 El maquetador genera una pagina web tomando como base una fichero plantilla, normalmente de extensión tpl.
 Estos ficheros son de texto (no se evaluan como PHP) e incluyen ciertas marcas para insertar contenido.
-Todas estas marcas se delimitan con <% ... %> (mismo marca que Smarty y ASP )
+Todas estas marcas se delimitan con <% ... %> (misma marca que Smarty y ASP )
 
 La loǵica del maquetador es simple: todos los contenidos son generados a partir de un modulo (el programa que responde dicho contenido),
 una acción y una id que son pasados al modulo. Por ejemplo para editar los datos del artículo nº 5, el modulo debería ser
 articulos (el fichero se llamaría articulos.php), la acción podría ser editar, y la id 5. Para ver los dos ultimos banner
 el modulo seria banners (fichero banner.php), la acción "ultimos",y en esta caso la id no sería necesaria. En la plantilla
 aparecería:
+<%articulos(editar,5)%>
 <%banner(ultimos)%>
 <%articulos(top)%>
-El contenido solicitado por el usario se genera en etiqueta: <%contenido%>. Para saber que ha solicitado, se examina $_REQUEST,
-valor (c-controlador/modulo, a-acción, i-id).
 
-Las marcas son:
+El contenido solicitado por el usario se genera en etiqueta: <%contenido%>. Para saber que ha solicitado, se examina $_REQUEST,
+valor (c-controlador/modulo, a-acción, i-id). Por ejemplo: 
+index.php?c=articulos&a=editar&i=5
+index.php?c=banner&a=ultimos
+?c=articulos&a=top
+
+Otras Marcas
+======================================
+Otras marcas que puedes utilizar son
 
 <%include fichero %>
-ej:   <%include marca.tpl %>
 Para incluir un fichero.
+ejemplo:   <%include marca.tpl %>
 
 <%controlador(accion[,id])%> 
+Se sustituye por la llamada al controlador con la acción e id.
 ej: <%noticias(masVistas) %>
     <%texto(ver,1)%>
     <%info(titulo)%>
-Se sustituye por la llamada al controlador con la acción e id
 
 Esta etiqueta se puede hacer condicional:
 <%HOME ... %>
@@ -48,8 +65,10 @@ Si la condición se cumple, se imprime el código HTML o se llama a la función 
 
 
 FUNCIONES BÁSICAS DEL MAQUETADOR
+===================================
 
-maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false) {
+
+* maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false) {
 Genera la página usando $plantilla, y usando para el contenido el controlador por defecto y la
 acción, si se indican. Si es necesario, a maquetador_evaluar_estado, y maquetador_precarga_modulos.
 
@@ -63,18 +82,15 @@ Para generar una página bastaria con:
 maquetador_genera ("plantillas/index.tpl", "home","home");
 
 
-maquetador_evaluar_estado( $controlador=false, $accion=false)
+* maquetador_evaluar_estado( $controlador=false, $accion=false)
 Evalua el estado: que contenido se tiene que generar, si estamos o no en la home, si tenemos
 controlador o acción o se usan los de por defecto..
 
-maquetador_precarga_modulos( $path="./modulos") {
+* maquetador_precarga_modulos( $path="./modulos") {
 Precarga los modulos. Aquellos terminados con load.php son cargados siempre, y el resto a demanda (solo si
 el maquetador tiene que generar contenido del modulo ) 
 
-
-
-
-maquetador_script( $accion, $clave, $valor="", $adicional="media") {
+* maquetador_script( $accion, $clave, $valor="", $adicional="media") {
 Utilidad para generar guardar y generar contenido especial como por ejemplo las metas,y los javascript, que tienen que estar en el cabecera (head) de la página html.
 El funcionamiento es simple: los modulos pueden ir anotando información (metas, css, javascript)
 que posteriormente se imprime junto. 
@@ -82,30 +98,49 @@ que posteriormente se imprime junto.
 .. html de un modulo........
 maquetador_script ("añadir", "meta", "keywords", "lorem ipsum");
 
-
 .. index.tpl...
 <head>
 <meta ...
-<%maquetador(metas)%>  // se generan, si las hay los meta
+<%maquetador(meta)%>  // se generan, si las hay los meta
 <%maquetador(script)%> // se generan, si los hay los javascript.
 
  
-
-
 FUNCIONES PARA AYUDAR A GENERAR WEB
-function maquetador_enlace( $texto, $c, $a, $i="", $marcador="" , $adicional="", $paras="") {
-function maquetador_form( $c, $a, $i="") {
-function maquetador_array( $c, $a, $i="" ) {
-function maquetador_esHome(){
-function maquetador_buscador ( $controlador, $accion, $i='i') {   
-function maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional="") {
+*maquetador_enlace( $texto, $controlador, $accion, $id="", $marcador="" , $adicional="", $paras="")
+Devuelve un enlace HTML completo.
+ texto.    Texto del enlace maquetador_enlace("Ya tenemos web", "noticias", "ver", 5, "<li>" )
+ marcador. Si Etiqueta HTML a utilizar 
+	maquetador_enlace("Lorem", "noticias", "ver", 5, "<li>" )
+
+
+
+* maquetador_form( $controlador, $accion, $id="")
+Devuelve los input ocultos que debes incluir en cualquier formulario
+
+* maquetador_array( $controlador, $accion, $id="" )
+Devuelve los tres valores en formato array.
+
+* maquetador_esHome(){
+Devuelve true si estamos en la home (o sea, no hay controlador)
+
+* maquetador maqueetador_buscador ( $controlador, $accion, $idBusqueda='i') {   
+Devuelve un pequeño formulario de buscador donde la caja de busqueda tendrá la id que indicamos.
+
+* maquetador_superenlace( $texto, $opciones, $marcador="" , $adicional="") {
+
+
 
 
 FUNCIONES AUXILIARES DEL PROPIO MAQUETADOR.
- maquetador_extraer_marcas( $cadena ) {
- maquetador_extrae_modulo( $cadena ) {
- maquetador_lee_fichero ( $path, $cual ) {
- maquetador_insertar_include ( $plantilla ) {
- maquetador_evalua( $condicion) {
- maquetador_carga_modulos() 
+* maquetador_extraer_marcas( $cadena ) {
+
+* maquetador_extrae_modulo( $cadena ) {
+
+* maquetador_lee_fichero ( $path, $cual ) {
+
+* maquetador_insertar_include ( $plantilla ) {
+
+* maquetador_evalua( $condicion) {
+
+* maquetador_carga_modulos() 
  Carga todos los modulos.. 
