@@ -8,6 +8,7 @@
  * @license   GPL
  * @version   14-Enero-2011
  *
+ * 2011-05-03 Añadido el idioma al estado.
  * 2011-01-14 c maquetador_enlace que añadir &amp al final
  * 2010-10-05 añadido maquetador_registro js-post y elementos.
  *            a maquetador_elemento
@@ -42,6 +43,7 @@
 
 
 include_once ("funciones.php");
+include_once ("traduccion.php");
 
 
 /*
@@ -75,8 +77,6 @@ function maquetador_elemento ( $elemento, $valor, $concatenar=true){
                                 $elemento,
                                 $valor);
 }
-
-
 
 function maquetador_registro_add( $tipoRegistro, $clave="", $valor="all") {
     return maquetador_registro( "guardar", $tipoRegistro, $clave, $valor);
@@ -205,7 +205,7 @@ function maquetador_carga_modulos() {
  * marcas.  
 */
 
-function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false, $configuracion=false) {
+function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto=false, $configuracion=false, $idiomasValidos=false) {
     global $aEstado ;
 
     $pendientes = false;
@@ -219,7 +219,7 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
 
     // precarga de modulos
     if ( !is_array($aEstado) ) {
-        maquetador_evaluar_estado($controladorDefecto, $accionDefecto);
+        maquetador_evaluar_estado($controladorDefecto, $accionDefecto,$idiomasValidos);
     }
 
     if ( !isset($aEstado["modulos"]) ) {
@@ -440,18 +440,55 @@ function maquetador_estado( $cual) {
     return $aEstado[$cual];
 }
 
-function maquetador_evaluar_estado( $controlador=false, $accion=false) {
+// Cargar el idioma: es o eu.
+global $idioma;
+if ( isset($_REQUEST["cambiarIdioma"]) ) {
+   // primero se examina la petición
+   $idioma = $_REQUEST["cambiarIdioma"];   
+} elseif ( isset($_SESSION["idioma"])) {
+   // luego la sessión
+   $idioma = $_SESSION["idioma"];
+} else {
+   // por fin, se intenta que el idioma por defecto sea el del navegador
+  	$idioma= ( strpos ( preg_replace('/(;q=\d+.\d+)/i', '', getenv('HTTP_ACCEPT_LANGUAGE')),"eu")===FALSE ? "es" : "eu");   
+}
+
+// ahora se corrige idioma.
+if ( !in_array($idioma , array("es","eu","en")) ){
+    $idioma = "es";
+}
+$_SESSION["idioma"]=  $idioma;
+
+
+function maquetador_evaluar_estado( $controlador=false, $accion=false, $idiomasValidos=false) {
     global $aEstado;
 
-    // Cargar el estado o petición
+    // Determinar el idioma
+    $idioma= por_defecto ( si_es_key($_REQUEST, "l"),
+                           si_es_key($_SESSION, "idioma"));
+    if ( !$idioma ){
+        $idioma= substr(getenv('HTTP_ACCEPT_LANGUAGE'),0,2);
+    }     
+    
+    // Corrección final del idioma, y comprobar validez
+    if ( !preg_match('/^[a-z]{2}(_[a-z]{2})?$/i', $idioma) ){
+        $idioma=  si_es_key ( $GLOBALS, "TIDIOMA_DEFECTO", "es") ;        
+    }
+    
+    if ( $idiomasValidos && !preg_match('/^('.$idiomasValidos.')?$/i', $idioma)) {        
+        $idioma=  si_es_key ( $GLOBALS, "TIDIOMA_DEFECTO", "es") ;        
+    }        
+    $_SESSION["idioma"]=  $idioma;
+    
     $aEstado = array (
-            "controlador" => por_defecto($_REQUEST["c"], $controlador, $_GLOBALS["HOME_CONTROLADOR"],"home"),
-            "accion"      => por_defecto($_REQUEST["a"], $accion     , $_GLOBALS["HOME_ACCION"],"index"),
-            "id" 	      => $_REQUEST["i"],
-            "pagina"      => $_REQUEST["p"],
-            "order"       => $_REQUEST["order"],
-            "orderby"     => $_REQUEST["orderby"],
-            "esHome"      => $_REQUEST["c"]==""  );
+            "controlador" => por_defecto( si_es_key($_REQUEST,"c"), $controlador, si_es_key($GLOBALS,"HOME_CONTROLADOR"),"home"),
+            "accion"      => por_defecto( si_es_key($_REQUEST,"a"), $accion     , si_es_key($GLOBALS,"HOME_ACCION"),"index"),
+            "id" 	      => si_es_key($_REQUEST, "i"),
+            "idioma"      => $idioma,
+            "pagina"      => si_es_key($_REQUEST, "p"),
+            "order"       => si_es_key($_REQUEST, "order"),
+            "orderby"     => si_es_key($_REQUEST, "orderby"),
+            "esHome"      => si_es_key($_REQUEST, "c")=="");
 }
 
 /* 
@@ -462,9 +499,9 @@ function maquetador_evaluar_estado( $controlador=false, $accion=false) {
 
 function maquetador_extraer_marcas( $cadena ) {
     $aRet = array();
-    $aRet["<%contenido%>"] = ""; // contenido debe ser la primera acción a realizar
-    /* @TODO usar preg_match_all */
-    while ( preg_match ( "/<%(.*)*%>/Ui", $cadena, $aTemp )) {
+    $aRet["<%contenido%>"] = ""; // contenido debe ser la primera acción a realizar    
+        
+    while ( preg_match ( "/<%.*%>/Ui", $cadena, $aTemp )) {
         $aRet[$aTemp[0]]="";
         $cadena = str_replace ( $aTemp[0], "", $cadena );
     }
@@ -506,8 +543,8 @@ function maquetador_extrae_modulo( $cadena ) {
     $aTemp =  preg_split ( "#[,\(\)]#", $cadena);
     return array (
             "modulo"      => $aTemp[0],
-            "accion"      => $aTemp[1],
-            "id"          => $aTemp[2],
+            "accion"      => si_es_key ($aTemp,1),
+            "id"          => si_es_key ($aTemp,2),
             "condicional" => $cuando );
 }
 

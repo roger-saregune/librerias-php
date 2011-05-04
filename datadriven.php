@@ -4,13 +4,14 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2010-09-30
+ * @version 2011-05-04
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
  *
  * Correcciones
- *  2010/09/30 Añadido (again) siguienteAccion en ddlib_edicion.
- *  2010/09/27 Corregido: paginacion ahora con querystring como variable.
+ * 2011/05/04 correciones variables sin declarar
+ * 2010/09/30 Añadido (again) siguienteAccion en ddlib_edicion.
+ * 2010/09/27 Corregido: paginacion ahora con querystring como variable.
  *             correciones en el password.
  * 20010/06/29 + ddlib_salvar. Como el guardar, pero con un orden lógico de argumentos.
  * 2010/06/13 Corregido: ddlib_consulta al manejar dd con campos sin acceso, calculaba
@@ -48,6 +49,7 @@
 
 include_once ("paginacion.php");
 include_once ("imagenes.php");
+include_once ("funciones.php");
 
 /* experimento */
 class ddlib_dd {
@@ -79,9 +81,6 @@ class ddlib_dd {
 
 }
 
-function _ddlib_opcion (&$opciones, $cual, $defecto ){
-   return ( isset($opciones[$cual])? $opciones[$cual]: $defecto);
-}
 
 
 /**
@@ -111,7 +110,7 @@ function ddlib_etiqueta_html ($etiqueta, $atributos=NULL, $contenido="" ) {
 
 function ddlib_obtenerCampo ( &$aCampo, $aFila){
 
-    if ( is_array ( $aCampo["campos"])){
+    if ( isset($aCampo["campos"]) && is_array ( $aCampo["campos"])){
         foreach ( $aCampo["campos"] as $campo => $tipo ){
             $aRet[$campo]= $aFila[$campo];
         }
@@ -260,28 +259,28 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
    $nCont = 0;
    $lista = "";
    foreach ( $aTabla as  $aCelda) {
-      if ( $aCelda["acceso"]===false || isset($aCelda["filaextra"]) ) {
+      if ( si_es_key($aCelda,"acceso")===false || isset($aCelda["filaextra"]) ) {
          $nCont++;
          continue;
       }
 
       $clase  = ddlib_formatoCampo( $aCelda );
       $orden  = ( $order == $nCont ? " ordenactual" : "");
-   	$lista .= "\n<th class='$clase$orden'>";
+      $lista .= "\n<th class='$clase$orden'>";
 
-   	$cNodo = remove_querystring_var ( "?". $querystring, "order");
-   	$cNodo = remove_querystring_var ( $cNodo, "orderby");
+      $cNodo = remove_querystring_var ( "?". $querystring, "order");
+   	  $cNodo = remove_querystring_var ( $cNodo, "orderby");
       if ( isset($aCelda["order"] )){
    	   	if ($nCont == $order) {
-   	   		$lista .= "<a href='$cNodo&order=$nCont&orderby=".  ( $orderBy=="ASC" ? "DESC" : "ASC") .  "' class='orden$orderBy'>{$aCelda[cabecera]}</a>";
+   	   		$lista .= "<a href='$cNodo&order=$nCont&orderby=".  ( $orderBy=="ASC" ? "DESC" : "ASC") .  "' class='orden$orderBy'>{$aCelda['cabecera']}</a>";
    	   	} else {
-   	   		$lista .=  "<a href='$cNodo&order=$nCont&orderby=ASC' class='ordenASC'>{$aCelda[cabecera]}</a>";
+   	   		$lista .=  "<a href='$cNodo&order=$nCont&orderby=ASC' class='ordenASC'>{$aCelda['cabecera']}</a>";
    	   	}
       } else {
    	   	$lista .=  $aCelda["cabecera"];
       }
-   	$lista .=  "</th>";
-   	$nCont++;
+   	  $lista .=  "</th>";
+   	  $nCont++;
    }
 
    if ( $lHayOpciones ) {
@@ -289,7 +288,7 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
       $nCont++;
    }
 
-   $cResul .= "<thead>\n <tr>$lista</tr>\n</thead>\n";
+   $cResul = "<thead>\n <tr>$lista</tr>\n</thead>\n";
    if ( $cPaginacion ){
       $cResul .=  "<tfoot>\n <tr><td colspan='$nCont' >$cPaginacion</td></tr>\n</tfoot>";
    }
@@ -311,11 +310,11 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
 
 
   if ( $lHayOpciones = isset( $aOpciones["opciones"])){
-     $opcionID          = por_defecto ( $aOpciones["opcionesId"], $aOpciones["opcionesID"], $aTabla[0]["campo"] );
-     $separadorOpciones = por_defecto ( $aOpciones["opcionesSeparador"],"|");
+     $opcionID          = por_defecto ( si_es_key($aOpciones,"opcionesId"), si_es_key($aOpciones,"opcionesID"), $aTabla[0]["campo"] );
+     $separadorOpciones = por_defecto ( si_es_key($aOpciones,"opcionesSeparador"),"|");
   }
 
-  $cResul .="\n<tbody>";
+  $cResul ="\n<tbody>";
   $lPar = true;
   $rsConsulta= mysql_query( $cSQL);
   while ( $fila = mysql_fetch_array( $rsConsulta) ) {
@@ -324,7 +323,7 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
 	   // dibujamos cada celda según su tipo //
 
 	   foreach ( $aTabla as $aCelda) {
-	      if ( $aCelda["acceso"] === false ||
+	      if ( si_es_key($aCelda,"acceso") === false ||
 	           isset($aCelda["filaextra"]) ) {
 	         continue;
 	      }
@@ -409,12 +408,13 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     // titulo
     $cResul  = "";
     if ( isset($aOpciones["titulo"]) ) {
-        $cResul .=  ( $aOpciones["tituloSinHTML"]==true ? $aOpciones["titulo"] : "<h2><span>{$aOpciones[titulo]}</span></h2>\n" );
+        $cResul .=  ( si_es_key($aOpciones,"tituloSinHTML") ? $aOpciones["titulo"] : "<h2><span>{$aOpciones['titulo']}</span></h2>\n" );
     }
 
     // incluir el menu de Opciones
     if ( isset( $aOpciones["menu"] ) ) {
         $aMenu = $aOpciones["menu"];
+        $lista = "";
         if ( is_array($aMenu) ) {
             foreach ( $aMenu as $unaOpcion ) {
                 $lista .= "<li>$unaOpcion</li>\n" ;
@@ -434,8 +434,8 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
 
     // Ordenar los campos
     global $aEstado;
-    $order   = por_defecto ($aEstado["order"]  , $aOpciones["order"], 0 );
-    $orderby = por_defecto ($aEstado["orderby"], $aOpciones["orderby"], "ASC");
+    $order   = por_defecto ( si_es_key($aEstado,"order")  , si_es_key($aOpciones,"order"), 0 );
+    $orderby = por_defecto ( si_es_key($aEstado,"orderby"), si_es_key($aOpciones,"orderby"), "ASC");
     // completar SELECT
     if ( stripos($cSQL,"SELECT ")!== 0 ){
         foreach ( $aCampos as $dd ){
@@ -470,15 +470,15 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
 
     // Paginación.
     if ( !isset($aOpciones['paginacion']) || !$aOpciones['paginacion']) {
-        $pags        = por_defecto ($aOpciones["paginas"], 10);
-        $regs        = por_defecto ($aOpciones ["registrosPorPagina"], 20);
+        $pags        = por_defecto ( si_es_key($aOpciones,"paginas"), 10);
+        $regs        = por_defecto ( si_es_key($aOpciones,"registrosPorPagina"), 20);
         $aPaginacion = paginacion($cSQL, $leyenda, $regs, $pags, tIdiomaLocale("paginacion"), $querystring );
     } else {
         $aPaginacion = array("","",$cSQL,"");
     }
 
     // calcular la cabecera (pie incluido ) y luego el cuerpo.
-    $atributosTabla =  "class='" . por_defecto ( $aOpciones["tablaClase"] , "consulta") . "'" ;
+    $atributosTabla =  "class='" . por_defecto ( si_es_key($aOpciones,"tablaClase") , "consulta") . "'" ;
     if ( isset( $aOpciones["tablaID"]) ) {
         $atributosTabla .= " id='{$aOpciones[tablaID]}";
     }
@@ -783,7 +783,7 @@ function ddlib_edicion ( $aTabla, $cSQL="", $aOpciones  ){
  */
 
 
-$prefijoID = _ddlib_opcion( $aOpciones, "prefijoID", "campo" ) . "_";
+$prefijoID = si_es_key( $aOpciones, "prefijoID", "campo" ) . "_";
 
 // titulo
 $cResul  = "";
@@ -838,7 +838,7 @@ if ( $lObligatorio ){
 }
 
 // calcular la cabecera (pie incluido ) y luego el cuerpo.
-$atributosTabla =  "class='" . _ddlib_opcion( $aOpciones, "tablaClase", "edicion") . "'" ;
+$atributosTabla =  "class='" . si_es_key( $aOpciones, "tablaClase", "edicion") . "'" ;
 $ultimaTabla="";
 
 // obtener los valores

@@ -4,10 +4,11 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2011-03-1
+  * @version 2011-05-03
   * @licence GPL
 
-  * 2011/03/01 Añadio js_confirm (again)
+  * 2001/05/03 Añadiro si_es_key
+  * 2011/03/01 Añadido js_confirm (again)
   * 2010/09/29 Repaso de mqueryString. 
   *            + mquerystringToArray
   *            + mquerystringFromArray
@@ -83,6 +84,11 @@ function mPrint($que,$level=1, $html=true){
    } else {
         echo $que;
    }
+}
+
+
+function si_es_key ( &$array, $key, $return=""){
+    return ( isset($array[$key]) ? $array[$key] : $return );
 }
 
 function por_defecto(){

@@ -4,10 +4,11 @@
  * Paginación de resultados SQL. 
  * funciona solo sobre Mysql.
  *
- * @version 2010/09/26 
+ * @version 2011/05/04 
  *
  * 
  * Cambios
+ * 2011/05/04 correciones de variables sin declarar.
  * 2010/09/29 querystring
  * 2010/09/27 correciones y ampliaciones.
  *            clases para los enlaces de paginación.
@@ -52,6 +53,7 @@ function _paginacion_base($queryString ="" ){
 function paginacion( $cSql, $leyenda, $tamPagina=10, $maxIndex=10, $leyendaPaginas="Página %s de %s", $queryString=""){
    /* devuelve un array con ( n reg, n paginas, cSQL limitada, navegación ) */
 
+   $paginaActual = 0;
    if ( $queryString ) {
      $nTemp = strpos( $queryString,"PaginaActual=");
      if ( $nTemp > 0 ) {
@@ -60,7 +62,7 @@ function paginacion( $cSql, $leyenda, $tamPagina=10, $maxIndex=10, $leyendaPagin
    } 
 
    if ( !$paginaActual ){ 
-      $paginaActual= $_REQUEST["PaginaActual"] OR  $paginaActual= mRequest("PaginaActual");    
+      $paginaActual= por_defecto ( si_es_key($_REQUEST,"PaginaActual"), mRequest("PaginaActual"));    
 	   if ($paginaActual=="") {
 		   $paginaActual=1;	
 	   }
