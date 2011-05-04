@@ -8,13 +8,17 @@
  * @license   GPL
  * @version   14-Enero-2011
  *
+ * 2011-05-04 a maquetador_set_plantilla
+ *            a maquetador_get_plantilla
+ *            Ahora el maquetador evalua primero el contenido, y luego lee el fichero
+ *            de plantilla usando las funciones anteriors
  * 2011-05-03 Añadido el idioma al estado.
  * 2011-01-14 c maquetador_enlace que añadir &amp al final
  * 2010-10-05 añadido maquetador_registro js-post y elementos.
  *            a maquetador_elemento
  * 2010-10-02 Reformateo del código a tab de cuatro espacios.
  *            c maquetador_script echaba un \n y no un nueva linea
- *            Mayor claridad en la funcion maquetador_scrip (ahora obsoleta)
+ *            Mayor claridad en la funcion maquetador_script (ahora obsoleta)
  *            a maquetador_registro_add
  *            a maquetador_registro_print
  *            a maquetador_registro (antes _script)
@@ -200,6 +204,24 @@ function maquetador_carga_modulos() {
 
 }
 
+
+/* 
+ * Definir la plantilla del maquetador
+ * 
+ */
+
+
+function maquetador_set_plantilla($nueva){
+    global $aEstado;
+    $aEstado["plantilla"]= $nueva;
+}    
+
+function maquetador_get_plantilla(){
+    global $aEstado;
+    return ( si_es_key($aEstado,"plantilla", false));
+}
+    
+
 /*
  * Genera la maqueta final. Lee la plantilla y va insertando las 
  * marcas.  
@@ -209,6 +231,8 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
     global $aEstado ;
 
     $pendientes = false;
+    
+    maquetador_set_plantilla($plantilla);
 
     // Configurar
     if ( is_array($configuracion)){
@@ -226,22 +250,26 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
         maquetador_precarga_modulos();
     }
 
+
+    // evaluar el contenido    
+    $contenido = call_user_func ( $aEstado["controlador"], $aEstado["accion"], $aEstado["id"] )  ;
+   
     // leer la plantilla
+    $plantilla = maquetador_get_plantilla();
     if ( !file_exists($plantilla) ) {
-        echo t("No exista la plantilla: [$plantilla]");
+        echo t("No exista la plantilla:"). "[$plantilla]" ;
         return false;
     }
     $html     = maquetador_insertar_include ( $plantilla );
     $aGenerar = maquetador_extraer_marcas ( $html );
 
-    foreach ( $aGenerar as $marca=>$contenido ) {
+    foreach ( $aGenerar as $marca=>$valor_marca ) {
         $aDatos = maquetador_extrae_modulo ( $marca );
 
         // averiguar el modulo
         if ( $aDatos["modulo"] == "contenido") {
-            $modulo          = $aEstado["controlador"];
-            $aDatos["accion"]= ( $aDatos["accion"]=='' ? $aEstado["accion"] : $aDatos['accion']);
-            $aDatos["id"]    = ( $aDatos["id"]    =='' ? $aEstado["id"]     : $aDatos['id']);
+            $aGenerar[$marca] = $contenido;
+            continue;
         } elseif ($aDatos["modulo"]=="maquetador") {
             $pendientes[$marca] = $aDatos["accion"];
             continue;
