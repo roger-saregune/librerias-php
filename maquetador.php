@@ -6,8 +6,9 @@
  * @author    Roger
  * @copyright Saregune
  * @license   GPL
- * @version   14-Enero-2011
+ * @version   11-Mayo-2011
  *
+ * 2011-05-11 c Es necesario cargar el modulo invocado por contenido
  * 2011-05-04 a maquetador_set_plantilla
  *            a maquetador_get_plantilla
  *            Ahora el maquetador evalua primero el contenido, y luego lee el fichero
@@ -251,8 +252,13 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
     }
 
 
-    // evaluar el contenido    
-    $contenido = call_user_func ( $aEstado["controlador"], $aEstado["accion"], $aEstado["id"] )  ;
+    // evaluar el contenido  
+    $modulo = $aEstado["controlador"] ;
+    if (  $aEstado["modulos"][$modulo] ) {
+        include_once $aEstado["modulos"][$modulo];
+        $aEstado["modulos"][$modulo]= false;
+    }    
+    $contenido = call_user_func ( $modulo , $aEstado["accion"], $aEstado["id"] )  ;
    
     // leer la plantilla
     $plantilla = maquetador_get_plantilla();
