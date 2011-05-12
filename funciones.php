@@ -4,10 +4,11 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2011-05-03
+  * @version 2011-05-11
   * @licence GPL
 
-  * 2001/05/03 Añadido si_es_key
+  * 2011/05/13 c mImplode
+  * 2011/05/03 Añadido si_es_key
   * 2011/03/01 Añadido js_confirm (again)
   * 2010/09/29 Repaso de mqueryString. 
   *            + mquerystringToArray
@@ -548,8 +549,8 @@ function lista(){
 }
 
 
-function mimplode ($patron, $array, $separador = "") {
-
+function mImplode ($patron, $array, $separador = "") {
+    $sep="";
     foreach ($array as $k=>$valor) {
         $cRet .= $sep . sprintf($patron, $k, $valor);
         $sep = $separador;
@@ -557,6 +558,8 @@ function mimplode ($patron, $array, $separador = "") {
     
     return $cRet;
 }
+
+
 
 /**
 *

@@ -4,11 +4,12 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2011-05-04
+ * @version 2011-05-13
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
  *
  * Correcciones
+ * 2011/05/13 Correciones menores (tipos consulta: checkbox, si, no)
  * 2011/05/04 correciones variables sin declarar
  * 2010/09/30 Añadido (again) siguienteAccion en ddlib_edicion.
  * 2010/09/27 Corregido: paginacion ahora con querystring como variable.
@@ -51,35 +52,7 @@ include_once ("paginacion.php");
 include_once ("imagenes.php");
 include_once ("funciones.php");
 
-/* experimento */
-class ddlib_dd {
-  public $tabla;
-  public $id;
-  public $idEesNumerico = true;
 
-  public $consultas;
-  public $edicion;
-
-  function __construct ( $tabla, $id='', $idEsNumerico = true){
-    $this->tabla       = $tabla;
-    if ( $id=='' ){
-       $this->id = mysql_campoClave($tabla) ;
-    } else {
-       $this->id = $id ;
-    }
-    $this->idEsNumerico= $idEsNumerico;
-  }
-
-  function edicion($dd) {
-     $this->edicion = $dd;
-  }
-
-  function consultar($dd, $consulta="principal") {
-     $this->consultas[$consulta]= $dd;
-  }
-
-
-}
 
 
 
@@ -87,7 +60,6 @@ class ddlib_dd {
  * Construye una etiqueta xHTML con sus atributos, y contenido
  * @return etiqueta XHTML(Cadena)
  */
-
 
 function ddlib_etiqueta_html ($etiqueta, $atributos=NULL, $contenido="" ) {
    $cRet = "";
@@ -144,6 +116,18 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
 }
 
 
+ function _ddlib_mImplode( $separador, &$lista ){
+        $ret="";
+        $sep="";
+        foreach ($lista as $valor){
+            if ( $valor ) {
+                $ret.= $sep . $valor;
+                $sep = $separador;
+            }
+        }
+        return $ret;
+    }
+
 /**
  * Obtiene la representación html de un campo.
  * Se utiliza en consulta.
@@ -151,28 +135,33 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
  */
 
 function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
+   
     $idioma = tIdiomaPorDefecto();
 
     $aParametros = explode( ' ', $aCampo["tipo"] );
     $formato = $aParametros[0];
+    $resto = substr( $aCampo["tipo"],strlen($formato) +1 );
 
     switch ( $formato ) {
         case "adjunto":
+            if ( $campo ) {
+                $cPath= ( isset($aParametros[1]) ? $aParametros[1] ."/" : "");                
+                return "<a href='$cPath$campo'>" . corta($campo,25) . "</a>";            
+            }   
+            return "";            
+        
         case "url" :
             if ( $campo ) {
-                // @TODO verificar otros protocolos
-                if ( substr($campo,0,4)!="http")  {
-                    $cTemp      = ( isset($aParametros[1]) ? $aParametros[1] : "") . $campo;
-                } else {
-                    $cTemp  = $campo;
-                }
-                return "<a href='$cTemp'>" . corta($campo,25) . "</a>";
-            } else {
-                return "";
+                $cHttp = (  substr($campo,0,4)!="http" ? "http://" : "" );
+                $clase = si_es_key ( $aCampo, 'clase','externo');
+                return "<a href='$cHttp$campo' class='$clase'>" . corta($campo,25) . "</a>";
             }
+            return "";
 
+        case "concatena":                    
         case "implode":
-            return ( is_array($campo) ? implode( substr($aCampo["tipo"],8),$campo ): $campo);
+            $separador = substr($aCampo["tipo"], $formato=="implode"? 8:10);
+            return ( is_array($campo) ? _ddlib_mimplode( $separador, $campo ): $campo);
 
         case "lista" :
             if ( isset($aCampo["lista"])) {
@@ -183,9 +172,12 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
                 return   $campo;
             }
 
-
         case "checkbox":
-
+           if ( $resto ){
+               return ( $campo ? $resto : "") ;
+           } else {
+               return ( $campo ? tIdiomaLocale ("SI") : tIdiomaLocale ("NO") ) ;
+           }
         case "SINO":
             return "<strong>". ( $campo ? tIdiomaLocale ("SI") : tIdiomaLocale ("NO") ) . "</strong>";
         case "siNO":
@@ -193,19 +185,13 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
         case "SIno":
             return ( $campo ? "<strong>".tIdiomaLocale ("SI") . "</strong>": tIdiomaLocale ("NO"));
 
-        case "sino":
-            $campo = ( $campo ? "SI": "NO");
-            return tIdiomaLocale ($campo ) ;
-
-
-        case "si" :
-            $campo = ( $campo ? "SI": "");
-            return tIdiomaLocale ($campo ) ;
-
-        case "no" :
-            $campo = ( $campo ? "" : "NO");
-            return tIdiomaLocale ($campo ) ;
-
+        case "sino": return tIdiomaLocale ( $campo ? "SI": "NO");
+        case "si"  : return $campo ? tIdiomaLocale("SI"): ""   ;
+        case "no"  : return $campo ? "" : tIdiomaLocale("NO") ;
+        case "SI"  : return $campo ? "<strong>". tIdiomaLocale("SI") ."</strong>" : ""   ;
+        case "NO"  : return $campo ? "" : "<strong>". tIdiomaLocale("NO") ."</strong>" ;
+        
+        
         case "funcioncampo" :
             return call_user_func( $aParametros[1], $campo );
 
@@ -446,8 +432,8 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
                 } else {
                     $campos[]= $dd["campo"];
                 }
-            } elseif ( isset($dd["campos"])) {
-                $campos= array_merge($campos,$dd["campos"]);
+            } elseif ( isset($dd["campos"])) {                
+                $campos   = array_merge($campos, array_keys($dd["campos"]));
             }
         }
         // TODO REVISAR.
