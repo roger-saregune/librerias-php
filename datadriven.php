@@ -4,11 +4,12 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2011-05-13
+ * @version 2011-05-14
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
  *
  * Correcciones
+ * 2011/05/14 tipos consulta: cadena [corta], sinHTML [corta | tags]
  * 2011/05/13 Correciones menores (tipos consulta: checkbox, si, no)
  * 2011/05/04 correciones variables sin declarar
  * 2010/09/30 Añadido (again) siguienteAccion en ddlib_edicion.
@@ -215,6 +216,18 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
                 return "";
             }
 
+        case "sinHTML":            
+            if ( !isset($aParametros[1])) {
+                return strip_tags($campo);
+            }
+            return  isset( $aParametros[1]) && is_numeric ( $aParametros[1]) ?
+                        corta($campo,$aParametros[1]):             
+                        strip_tags($campo, $aParametros[1]) ;
+
+        case "texto":
+        case "cadena":    
+            return ( isset($aParametros[1]) ?corta($campo,$aParametros[1]): $campo);
+        
         case "fecha":
             return fecha_mysql_php ( $campo, tIdiomaLocale ("fecha") );
 

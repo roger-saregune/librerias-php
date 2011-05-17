@@ -4,9 +4,12 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2011-05-11
+  * @version 2011-05-17
   * @licence GPL
 
+
+  * 2011/05/17 + mTablaSQL.
+  * 2011/05/13 c funcion corta.
   * 2011/05/13 c mImplode
   * 2011/05/03 Añadido si_es_key
   * 2011/03/01 Añadido js_confirm (again)
@@ -511,8 +514,11 @@ function m_split ( $s , $nMax, $br = "\n", $pre="&lt; " ) {
 }
 
 
-function corta ( $cadena, $longitud=80., $annadir =".."){
-   return substr( strip_tags("".$cadena.""),0,$longitud).  (strlen($cadena)>$longitud? $annadir :"" );
+function corta ( $cadena, $longitud=80, $annadir =".."){
+   $limpia = strip_tags($cadena);
+   return ( strlen($limpia)>$longitud ?
+                substr( $limpia,0,$longitud). $annadir :
+                $limpia );
 }
 
 
@@ -880,10 +886,10 @@ function mysql_query_registro($cSql){
  * @param  Sentencia SQL-SELECT
  * @return Todos los registros o FALSE 
  */
-function mysql_query_registros($cSql){
+function mysql_query_registros($cSql, $modo= MYSQL_BOTH){
 	$rsEmaitza = mysql_query($cSql);
 	$temp      = false;
-	while  ( $temp[]= mysql_fetch_array($rsEmaitza) ){ 
+	while  ( $temp[]= mysql_fetch_array($rsEmaitza,$modo) ){ 
    }	
 	mysql_free_result ( $rsEmaitza);	
    return $temp;
@@ -1166,12 +1172,45 @@ function xhtml_atributo ( $atributo, $valor=''){
 }
 
 
+function mTablaSQL( $SQL, $adicionales="" ){
+// dibujar los datos              
+$rs= mysql_query($SQL);
+$par   = true;
+$cabecera = false;
+$output = "";
+while ( $fila = mysql_fetch_assoc($rs)){
+    if ( !$cabecera ){
+        $output = sprintf ( "<table%s%s>\n<thead>\n<tr>", 
+               ( isset($adicionales["id"])    ? " id='{$adicionales[id]}'" : "" ),
+               ( isset($adicionales["class"]) ? " class='{" . $adicionales['class'] . "'"  : "" ) );
+        foreach ( $fila as $th=>$v){
+            $output .= "<th>$th</th>";
+        }
+        $output .="</tr>\n<tbody>\n";
+        $cabecera = true;
+    }
+    $output .= sprintf ( "<tr %s>", ( $par ? " class='par' " : "" ) ) ;
+    foreach ($fila as $i=>$td ){
+       $output .= "<td>$td</td>";
+    }
+    $output .= "</tr>\n";
+    $par = !$par;
+}
+
+if ( $cabecera){
+    $output .= "</tbody></table>\n";
+} else {
+    $output ="";
+}
+return $output;
+}
+
+
 function mTabla ( $cabeceras, $datos, $adicionales="" ){
   $output = sprintf ( "<table %s %s>\n<thead><tr>", 
                ( isset($adicionales["id"])    ? " id='{$adicionales[id]}'" : "" ),
                ( isset($adicionales["class"]) ? " class='{" . $adicionales['class'] . "'"  : "" ) );
  
- // dibujar cabeceras 
  foreach ( $cabeceras as $i=>$th ){
     if ( is_array ($th) ){
        $temp = "";
@@ -1188,28 +1227,18 @@ function mTabla ( $cabeceras, $datos, $adicionales="" ){
     }    
  } 
  $output .= "</tr></thead>\n<tbody>\n";               
-               
- 
+      
  // dibujar los datos              
  $par   = true;
  foreach ($datos as $i=>$fila ){
     $output .= sprintf ( "<tr %s>", ( $par ? " class='par' " : "" ) ) ;
     foreach ($fila as $j=>$columna ){
-       $output .= "<td{$claseTD[j]}>$columna</td>";       
+       $output .= "<td". $claseTD[$j] .">$columna</td>";       
     }
     $output .= "</tr>\n";
-    $par = !$par;function por_defecto(){
-	foreach ( func_get_args() as $arg ){
-  		if ($arg) {
-  			return $arg;
-  		}
-	}
-	return false;
+    $par = !$par;
 }
 
- }
- 
- 
  $output .= "</tbody></table>\n";
  return $output;
 } 

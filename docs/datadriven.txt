@@ -162,8 +162,15 @@ NO
 funcion funcioncampo funcionregistro
 imagen irudia ->ancho alto
 
-cadena
-fecha
+texto
+cadena [corta]
+Muestra un texto y lo corta si se espefica. Se aplica a VARCHAR y TEXT
+
+sinHTML [corta | tags]
+Limpia de HTML. Se puede optar por cortar, pero en tal caso todas las etiquetas 
+ser elimninada
+Ejemplos: sinHTML <p><strong>  sinHTML 90 
+
 
 sino  (para consulta)	   
 si (para consulta)
