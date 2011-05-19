@@ -167,10 +167,8 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
         case "lista" :
             if ( isset($aCampo["lista"])) {
                 return ( isset($aCampo["lista"][$campo]) ? $aCampo["lista"][$campo]: $campo );
-            } elseif ( isset($aParametros[1]) ) {
-                return mlista ($aParametros[1], $campo )  ;
             } else {
-                return   $campo;
+                return $campo;
             }
 
         case "checkbox":
