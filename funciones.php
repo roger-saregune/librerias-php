@@ -4,9 +4,11 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2011-05-17
+  * @version 2011-05-24
   * @licence GPL
 
+  * 2011/05/24 - mInputListaClaves. Usar mInputLista
+  *            m mControl
   * 2011/05/19 + mInputLista (2º parámetro es name/atributos
   *         + mInputListaSQL
   *         r mInputSiNo01 a mInputSiNo
@@ -557,12 +559,13 @@ function plantillaSegunCantidad ( $cantidad, $caso_es_0, $caso_es_1="", $caso_2o
 
 function mImplode ($patronPrintf, $array, $separador = "") {
     $sep="";
+    $ret="";
     foreach ($array as $k=>$valor) {
-        $cRet .= $sep . sprintf($patronPrintf, $k, $valor);
-        $sep = $separador;
+        $ret .= $sep . sprintf($patronPrintf, $k, $valor);
+        $sep  = $separador;
     }
 
-    return $cRet;
+    return $ret;
 }
 
 
@@ -909,17 +912,16 @@ function mysql_query_registros($cSql, $modo= MYSQL_BOTH){
  * @return array con lista.
  */
 function mysql_query_lista($cSql, $hash = false, $ret= false ){
-
-    $rsConsulta = mysql_query( $cSql);
-    while ( $fila = mysql_fetch_array($rsConsulta)){
-       if ( $hash ) {
-        $ret[$fila[0]]= $fila[1];
-       } else {
-            $ret[]= $fila[0];
-       }
-    }
-    mysql_free_result ( $rsConsulta);
-    return $ret;
+   $rsConsulta = mysql_query( $cSql);
+   while ( $fila = mysql_fetch_array($rsConsulta)){
+      if ( $hash ) {
+         $ret[$fila[0]]= $fila[1];
+      } else {
+         $ret[]= $fila[0];
+      }
+   }
+   mysql_free_result ( $rsConsulta);
+   return $ret;
 }
 
 
@@ -954,13 +956,13 @@ function limpiaSQLinjectionNumero ( $cTexto ){
 * @deprecated by in_array (php 4)
 */
 function in_lista ( $aguja ){
-    $aDatos = func_get_args();
-    foreach($aDatos as $i=>$valor ){
-        if ( $i > 0 and $aguja==$valor ){
-           return true;
-        }
-    }
-    return false;
+   $aDatos = func_get_args();
+   foreach($aDatos as $i=>$valor ){
+      if ( $i > 0 and $aguja==$valor ){
+         return true;
+      }
+   }
+   return false;
 }
 
 
@@ -975,37 +977,27 @@ function in_lista ( $aguja ){
 /**
 * devuelve un cadena HTML para un Select de una lista de valores
 */
-function mInputLista( &$aValores, &$atributos, $defecto=false ) {
+function mInputLista( &$valores, &$atributos, $defecto=false ) {
+   
    if ( !is_array($atributos) ){
-        $atributos["name"] = $atributos;
+      $ret="<select name='$atributos'>\n";
+   } else {
+      $ret="<select" . mImplode(" %s='%s'", $atributos) .">\n";
    }
-   $cRet="<select" . mImplode(" %0='%1'", $atributos) .">\n";
-   foreach( $aValores as $key=>$value ){
-     $cRet.= sprintf("<option value='$key'%s>$value</option>\n",
-                      ($defecto==$key?" selected": "");
+   
+   foreach( $valores as $key=>$value ){
+      $ret.= sprintf("<option value='$key'%s>$value</option>\n",
+                       ($defecto==$key?" selected": "") );
    }
-   $cTemp.="</select>\n" ;
-   return $cRet;
+   $ret.="</select>\n" ;
+   return $ret;
 }
 
 
-function mInputSiNo ( $atributos, $defecto=false )
-    $valores= array("0"=>"Si","1"=>"No");
-    return mInputList ( $valores, $atributos, $defecto)
-}
-
-
-/**
-* devuelve un cadena HTML para un Select de una lista hash (clave, valor).
-*/
-function mInputListaClaves( $aValores, $cName, $valorInicial, $atributos=""){
-$cTemp ="\n<select name='$cName' ". ( $cEstilo!="" ? "class='$cEstilo' " : "" ) . ">\n";
-foreach( $aValores as $clave => $valor ){
-  $cTemp.= sprintf( "<option value='$clave'%s>$valor</option>\n",
-                 ($clave==$valorInicial?" selected='selected'": "" ));
-  }
-$cTemp.="</select>\n" ;
-return $cTemp;
+function mInputSiNo ( $atributos, $defecto=false ){
+   $valores= array("1"=>"Si","0"=>"No");
+   $defecto= ( $defecto ? 1 : 0 );
+   return mInputLista ( $valores, $atributos, $defecto);
 }
 
 
@@ -1022,8 +1014,9 @@ function mInputSQL ( $cSQL, $atributos, $cValorInicial,  $opcionInicial=false){
 /**
 * Select de un entero booleano (0/1 pasa a NO/SI)
 */
-function mInputCheckbox( $cName, $cInicial, $cValue=1){
-   return "<input type='checkbox' name='$cName' value='$cValue'" . ($cInicial==$cValue ? " checked='checked' ": "" ) . ">";
+function mInputCheckbox( $atributos, $defecto=0, $valor=1){
+   return "<input type='checkbox' value='$valor'" . ( $defecto ? " checked='checked'" : "").
+          (!is_array($atributos) ? " name='$atributos'" : mImplode(" %s='%s'", $atributos))  .">";
 }
 
 
@@ -1031,51 +1024,113 @@ function mInputCheckbox( $cName, $cInicial, $cValue=1){
 * Devuelve un control según el tipo especificado)
 */
 
-function mControl ( $cTipo, $cEtiqueta, $cName, $cValor="", $cEstilo="dl", $aOpciones="" ){
-
-   $cId =  ( isset($aOpciones['id']) ? $aOpciones['id'] : $cName );
-   $cAdicional = "id='$cId'" ;
-   if ( isset($aOpciones['class'])){
-      $cAdicional .= " class='{ " . $aOpciones["class"] . "}'" ;
+function mControl ( $dd, $opciones=false){
+   if ( !$opciones) {
+      $opciones = array();
    }
 
-   // construir el input
-   $cLabel = "<label for='$cId'>$cEtiqueta</label>";
-   switch ( $cTipo ){
+   $id   =  ( isset($dd['id']) ? $dd['id'] : $dd['campo'] );
+   $valor= isset($opciones['valor']) ? $opciones['valor'] : false;
+   
+   $parametros = explode(" ", $dd["tipo"]);
+   $tipo = $parametros[0];
+   
+   $atributos = array("id"=>$id, "name"=>$dd['campo']) ;
+   
+   if ( isset($dd['clase'])) { $atributos['class']= $dd['clase'];  }
+   if ( isset($opciones['value']) && $tipo!="texto" ) { $atributos['value']= $opciones['value'];}
+   
+   if ( isset($dd['atributos'])  && is_array( $dd['atributos']) ){
+      $atributos= $atributos + $dd["atributos"];
+   }
+   $cAtributos= mImplode(" %s='%s'", $atributos );
+   
+   $resto = substr( $dd["tipo"], strpos( $dd["tipo"]," ")+1);
+   switch ( $tipo ){
+      case "numero":
+         if ( isset($parametros[1]) ){
+            $min = si_es_key($parametros,1,0);
+            $max = si_es_key($parametros,2,10);
+            $campo = "<select $cAtributos>\n";
+            for ( $opcion=$min; $opcion<$max;$opcion++){
+               $selected = ( $valor== $opcion ? ' selected' : '' );
+               $campo .= "<option value='$opcion'$selected>$opcion</option>\n";
+            }
+            $campo .= "</select>\n";
+         } else {
+            $campo = "<input type='text' $cAtributos>";
+         }
+         break;
+      
+      case "url":
+         $max = si_es_key($parametros,1,30);
+         $size= si_es_key($parametros,2,$max);
+         $campo = "<input type='text' size='$size' maxlength='$max' $cAtributos >";
+         break;
+      
       case "cadena":
-            $campo = "<input type='text' name='$cName' value='$cValor' $cAdicional >";
-            break;
-
-      case "texto" :
-            $campo = "<textarea name='$cName' $cAdicional>$cValor</textarea>";
-            break;
-
-      case "boolean":
+         $max = si_es_key($parametros,1,30);
+         $size= si_es_key($parametros,2,$max);
+         $campo = "<input type='text' size='$size' maxlength='$max' $cAtributos >";
+         break;
+      
+      case "texto":
+         $cols = si_es_key($parametros,1,60);
+         $filas= si_es_key($parametros,2,8);
+         $campo = "<textarea cols='$cols' rows='$filas' $cAtributos>$valor</textarea>";
+         break;
+      
+      case "lista":
+         $lista = mExplode("|",":",$resto);
+         if ( count($lista) < 5) {
+            $campo="";
+            unset($atributos['id']);
+            $cAtributos= mImplode(" %s='%s'", $atributos );
+            foreach ( $lista as $opcion=>$opcionLabel){
+               $checked = $valor== $opcion ? ' checked' : '';
+               $campo .= "<input value='$opcion' type='radio'$checked $cAtributos><span class='radio-label'> $opcionLabel </span>";
+            }
+         } else { 
+            $campo = "<select $cAtributos>\n";
+            foreach ( $lista as $opcion=>$opcionLabel){
+               $selected =  ($valor== $opcion ? ' selected' : '' );
+               $campo .= "<option value='$opcion'$selected>$opcionLabel</option>\n";
+            }
+         $campo .= "</select>\n";
+         }
+         break;
+         
+      case "checkbox":
       case "booleano":
-            $cValue = ( isset($aOpciones['value']) ? $aOpciones['value'] : 1 );
-            $cCampo = "<input type='radio' name='$cName' $cAdicional value='$value'" . ($cValor? " selected ": "" ) . ">";
-            break;
+         $value = si_es_key($aOpciones,"value",1);
+         $campo = "<input type='checkbox' $atributos" . ($valor? " selected ": "" ) . ">";
+         break;
    }
 
-   if ( isset($aOpciones["adicional"] )) {
-      $Campo .= ' ' . $aOpciones["adicional"];
+   if ( isset($dd["adicional"] )) {
+      $campo .= " <span class='control-adicional'>{$dd['adicional']}</span>";
    }
 
    // construir la label
-   if ( isset($aOpciones["obligatorio"] )) {
-      $cLabel = "<label for='$cId' class='obligatorio'>$cEtiqueta <span class='obligatorio'>(*)</span></label>";
+   $etiqueta= isset($dd["cabecera"]) ? $dd["cabecera"]: $dd["campo"] ;
+   if ( isset($dd["obligatorio"] )) {
+      $label = "<label for='$id' class='control-obligatorio'>$etiqueta<span class='control-obligatorio'>(*)</span></label>";
    } else {
-      $cLabel = "<label for='$cId'>$cEtiqueta</label>";
+      $label = "<label for='$id'>$etiqueta</label>";
    }
 
    // maquetar label y control según estilo
-   $aEstilo = array (
-      "dl"  => '<dd>%s</dd><dt>%s</dt>',
+   $estilos = array (
+      "dl"  => "<dt>%s</dt>\n<dd>%s</dd>",
       "p"    => '<p>%s %s</p>',
       "p-br"  => '<p>%s <br> %s</p>',
       "table" => '<tr><th>%s</th><td>%s</td></tr>');
-
-   return sprintf( $aEstilo[$cEstilo], $cLabel,$cCampo ) . "\n";
+    if ( !isset($opciones["estilo"]) || !isset($estilos[$opciones['estilo']])) {
+        $estilo = $estilos['dl'];
+    } else {
+        $estilo = $estilos[$opciones['estilo']];
+    }
+   return "\n". sprintf( $estilo, $label,$campo ) ;
 
 }
 

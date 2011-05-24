@@ -4,11 +4,12 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2011-05-14
+ * @version 2011-05-24
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
  *
  * Correcciones
+ * 2011/05/24 correción mysql_mlistaSQL
  * 2011/05/14 tipos consulta: cadena [corta], sinHTML [corta | tags]
  * 2011/05/13 Correciones menores (tipos consulta: checkbox, si, no)
  * 2011/05/04 correciones variables sin declarar
@@ -616,7 +617,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
 
            switch ( $tipo ) {
                case "listasql":
-                   $lista = mysql_mlistaClavesSQL( substr($dd["tipo"], 8))  ;
+                   $lista = mysql_query_lista( substr($dd["tipo"], 8), true)  ;
                    break;
                case "lista":
                    $lista= $dd["lista"];
@@ -1314,5 +1315,3 @@ function ddlib_tablaEdicionConsulta ( $cTitulo, $aTabla,  $cSQL, $aHidden=NULL, 
    mysql_free_result($rsEmaitza);
    return $cResul;
 }
-
-
