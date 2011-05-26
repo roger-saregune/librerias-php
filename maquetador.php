@@ -6,8 +6,10 @@
  * @author    Roger
  * @copyright Saregune
  * @license   GPL
- * @version   11-Mayo-2011
+ * @version   26-Mayo-2011
  *
+ * 2011-05-25 c detección de contenido(home) inexistente.
+ *            c Eliminado código suelto (¿detección idioma?)
  * 2011-05-11 c Es necesario cargar el modulo invocado por contenido
  * 2011-05-04 a maquetador_set_plantilla
  *            a maquetador_get_plantilla
@@ -252,13 +254,17 @@ function maquetador_genera($plantilla, $controladorDefecto=false, $accionDefecto
     }
 
 
-    // evaluar el contenido  
+    // evaluar el contenido principal
     $modulo = $aEstado["controlador"] ;
-    if (  $aEstado["modulos"][$modulo] ) {
-        include_once $aEstado["modulos"][$modulo];
-        $aEstado["modulos"][$modulo]= false;
-    }    
-    $contenido = call_user_func ( $modulo , $aEstado["accion"], $aEstado["id"] )  ;
+    if ( !isset( $aEstado["modulos"][$modulo]) ){
+        $contenido = "controlador desconocido: $modulo";
+    }else {
+        if (  $aEstado["modulos"][$modulo] ) {
+            include_once $aEstado["modulos"][$modulo];
+            $aEstado["modulos"][$modulo]= false;
+        }    
+        $contenido = call_user_func ( $modulo , $aEstado["accion"], $aEstado["id"] )  ;
+     }   
    
     // leer la plantilla
     $plantilla = maquetador_get_plantilla();
@@ -471,28 +477,8 @@ function maquetador_array( $c, $a, $i="" ) {
 
 function maquetador_estado( $cual) {
     global $aEstado;
-    return $aEstado[$cual];
+    return ( isset($aEstado[$cual]) ? $aEstado[$cual] : false);
 }
-
-// Cargar el idioma: es o eu.
-global $idioma;
-if ( isset($_REQUEST["cambiarIdioma"]) ) {
-   // primero se examina la petición
-   $idioma = $_REQUEST["cambiarIdioma"];   
-} elseif ( isset($_SESSION["idioma"])) {
-   // luego la sessión
-   $idioma = $_SESSION["idioma"];
-} else {
-   // por fin, se intenta que el idioma por defecto sea el del navegador
-  	$idioma= ( strpos ( preg_replace('/(;q=\d+.\d+)/i', '', getenv('HTTP_ACCEPT_LANGUAGE')),"eu")===FALSE ? "es" : "eu");   
-}
-
-// ahora se corrige idioma.
-if ( !in_array($idioma , array("es","eu","en")) ){
-    $idioma = "es";
-}
-$_SESSION["idioma"]=  $idioma;
-
 
 function maquetador_evaluar_estado( $controlador=false, $accion=false, $idiomasValidos=false) {
     global $aEstado;

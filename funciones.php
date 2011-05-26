@@ -4,9 +4,10 @@
   *
   * Librería general de funciones.
   * @author Roger
-  * @version 2011-05-24
+  * @version 2011-05-26
   * @licence GPL
 
+  * 2011/05/26 c mControl bug value.
   * 2011/05/24 - mInputListaClaves. Usar mInputLista
   *            m mControl
   * 2011/05/19 + mInputLista (2º parámetro es name/atributos
@@ -1038,7 +1039,7 @@ function mControl ( $dd, $opciones=false){
    $atributos = array("id"=>$id, "name"=>$dd['campo']) ;
    
    if ( isset($dd['clase'])) { $atributos['class']= $dd['clase'];  }
-   if ( isset($opciones['value']) && $tipo!="texto" ) { $atributos['value']= $opciones['value'];}
+   if ( isset($opciones['valor']) && $tipo!="texto" ) { $atributos['value']= $opciones['valor'];}
    
    if ( isset($dd['atributos'])  && is_array( $dd['atributos']) ){
       $atributos= $atributos + $dd["atributos"];

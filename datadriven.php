@@ -4,11 +4,12 @@
  *
  * Librería data-driven para gestionar y editar datos
  * Cambiada para gestión con el maquetador
- * @version 2011-05-24
+ * @version 2011-05-26
  * @author  Roger
  * @todo Borrar imagenes y adjuntos.
  *
  * Correcciones
+ * 2011/05/26 minibug.
  * 2011/05/24 correción mysql_mlistaSQL
  * 2011/05/14 tipos consulta: cadena [corta], sinHTML [corta | tags]
  * 2011/05/13 Correciones menores (tipos consulta: checkbox, si, no)
@@ -78,7 +79,7 @@ function ddlib_etiqueta_html ($etiqueta, $atributos=NULL, $contenido="" ) {
 
 /**
  * Obtiene el valor de un campo contenido en un array de datos
- * Se utiliza en consulta.
+ * Se utiliza en ddlib_consulta.
  * @return valor
  */
 
@@ -118,6 +119,11 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
 }
 
 
+/**
+ * devuelve un array como cadena. Se ignoran los valores vacios
+ * @return cadena
+ */
+
  function _ddlib_mImplode( $separador, &$lista ){
         $ret="";
         $sep="";
@@ -133,11 +139,11 @@ function ddlib_obtenerCampo ( &$aCampo, $aFila){
 /**
  * Obtiene la representación html de un campo.
  * Se utiliza en consulta.
- * @return valor
+ * @return cadenaHTML
  */
 
 function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
-   
+
     $idioma = tIdiomaPorDefecto();
 
     $aParametros = explode( ' ', $aCampo["tipo"] );
@@ -147,11 +153,11 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
     switch ( $formato ) {
         case "adjunto":
             if ( $campo ) {
-                $cPath= ( isset($aParametros[1]) ? $aParametros[1] ."/" : "");                
-                return "<a href='$cPath$campo'>" . corta($campo,25) . "</a>";            
-            }   
-            return "";            
-        
+                $cPath= ( isset($aParametros[1]) ? $aParametros[1] ."/" : "");
+                return "<a href='$cPath$campo'>" . corta($campo,25) . "</a>";
+            }
+            return "";
+
         case "url" :
             if ( $campo ) {
                 $cHttp = (  substr($campo,0,4)!="http" ? "http://" : "" );
@@ -160,7 +166,7 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
             }
             return "";
 
-        case "concatena":                    
+        case "concatena":
         case "implode":
             $separador = substr($aCampo["tipo"], $formato=="implode"? 8:10);
             return ( is_array($campo) ? _ddlib_mimplode( $separador, $campo ): $campo);
@@ -190,8 +196,8 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
         case "no"  : return $campo ? "" : tIdiomaLocale("NO") ;
         case "SI"  : return $campo ? "<strong>". tIdiomaLocale("SI") ."</strong>" : ""   ;
         case "NO"  : return $campo ? "" : "<strong>". tIdiomaLocale("NO") ."</strong>" ;
-        
-        
+
+
         case "funcioncampo" :
             return call_user_func( $aParametros[1], $campo );
 
@@ -215,18 +221,18 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
                 return "";
             }
 
-        case "sinHTML":            
+        case "sinHTML":
             if ( !isset($aParametros[1])) {
                 return strip_tags($campo);
             }
             return  isset( $aParametros[1]) && is_numeric ( $aParametros[1]) ?
-                        corta($campo,$aParametros[1]):             
+                        corta($campo,$aParametros[1]):
                         strip_tags($campo, $aParametros[1]) ;
 
         case "texto":
-        case "cadena":    
+        case "cadena":
             return ( isset($aParametros[1]) ?corta($campo,$aParametros[1]): $campo);
-        
+
         case "fecha":
             return fecha_mysql_php ( $campo, tIdiomaLocale ("fecha") );
 
@@ -237,19 +243,29 @@ function ddlib_visualizarCampo( &$aCampo, $campo, $fila ){
 
 }
 
+/**
+ * Devuelve la clase de un campos. Primero se examina [clase], luego
+ * [formato] y finalmente [tipo]
+ * @return cadena
+ */
 
-function ddlib_formatoCampo( $aCelda ) {
-   if ( isset( $aCelda["clase"]) ) {
+function _ddlib_formatoCampo( &$aCelda ) {
+   if ( isset($aCelda["clase"]) ) {
       return $aCelda["clase"];
    }
-   if ( isset( $aCelda["formato"]) ) {
+   if ( isset($aCelda["formato"]) ) {
       return $aCelda["formato"];
    }
 
    $aParametros = explode(" ",$aCelda["tipo"]);
-	return $aParametros[0];
+   return $aParametros[0];
 }
 
+
+/**
+ * Devuelve la cabecera (thead y tfoot) de un consulta
+ * @return cadena
+ */
 
 function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPaginacion, $order, $orderBy ){
 
@@ -262,23 +278,23 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
          continue;
       }
 
-      $clase  = ddlib_formatoCampo( $aCelda );
+      $clase  = _ddlib_formatoCampo( $aCelda );
       $orden  = ( $order == $nCont ? " ordenactual" : "");
       $lista .= "\n<th class='$clase$orden'>";
 
       $cNodo = remove_querystring_var ( "?". $querystring, "order");
-   	  $cNodo = remove_querystring_var ( $cNodo, "orderby");
+        $cNodo = remove_querystring_var ( $cNodo, "orderby");
       if ( isset($aCelda["order"] )){
-   	   	if ($nCont == $order) {
-   	   		$lista .= "<a href='$cNodo&order=$nCont&orderby=".  ( $orderBy=="ASC" ? "DESC" : "ASC") .  "' class='orden$orderBy'>{$aCelda['cabecera']}</a>";
-   	   	} else {
-   	   		$lista .=  "<a href='$cNodo&order=$nCont&orderby=ASC' class='ordenASC'>{$aCelda['cabecera']}</a>";
-   	   	}
+            if ($nCont == $order) {
+               $lista .= "<a href='$cNodo&order=$nCont&orderby=".  ( $orderBy=="ASC" ? "DESC" : "ASC") .  "' class='orden$orderBy'>{$aCelda['cabecera']}</a>";
+            } else {
+               $lista .=  "<a href='$cNodo&order=$nCont&orderby=ASC' class='ordenASC'>{$aCelda['cabecera']}</a>";
+            }
       } else {
-   	   	$lista .=  $aCelda["cabecera"];
+            $lista .=  $aCelda["cabecera"];
       }
-   	  $lista .=  "</th>";
-   	  $nCont++;
+        $lista .=  "</th>";
+        $nCont++;
    }
 
    if ( $lHayOpciones ) {
@@ -292,7 +308,6 @@ function _ddlib_consulta_cabecera( $aTabla, $querystring, $lHayOpciones, $cPagin
    }
 
    return $cResul;
-
 }
 
 
@@ -300,62 +315,57 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
 
    // calcular las funciones despues
    $after= false;
-	foreach ( $aTabla as $aCelda ){
-		if ( isset($aCelda["filaextra"]) ){
-			$after[]= $aCelda["filaextra"];
-		}
-	}
+   foreach ( $aTabla as $aCelda ){
+      if ( isset($aCelda["filaextra"]) ){
+         $after[]= $aCelda["filaextra"];
+      }
+   }
 
+   if ( $lHayOpciones = isset( $aOpciones["opciones"])){
+      $opcionID          = por_defecto ( si_es_key($aOpciones,"opcionesId"), si_es_key($aOpciones,"opcionesID"), $aTabla[0]["campo"] );
+      $separadorOpciones = por_defecto ( si_es_key($aOpciones,"opcionesSeparador"),"|");
+   }
 
-  if ( $lHayOpciones = isset( $aOpciones["opciones"])){
-     $opcionID          = por_defecto ( si_es_key($aOpciones,"opcionesId"), si_es_key($aOpciones,"opcionesID"), $aTabla[0]["campo"] );
-     $separadorOpciones = por_defecto ( si_es_key($aOpciones,"opcionesSeparador"),"|");
-  }
+   $cResul ="\n<tbody>";
+   $lPar = true;
+   $rsConsulta= mysql_query( $cSQL);
+   while ( $fila = mysql_fetch_array( $rsConsulta) ) {
+      $cResul .=  "\n <tr" . ($lPar ? "": " class='impar' " ). ">";
 
-  $cResul ="\n<tbody>";
-  $lPar = true;
-  $rsConsulta= mysql_query( $cSQL);
-  while ( $fila = mysql_fetch_array( $rsConsulta) ) {
-	   $cResul .=  "\n <tr" . ($lPar ? "": " class='impar' " ). ">";
-
-	   // dibujamos cada celda según su tipo //
-
-	   foreach ( $aTabla as $aCelda) {
-	      if ( si_es_key($aCelda,"acceso") === false ||
-	           isset($aCelda["filaextra"]) ) {
-	         continue;
-	      }
-
+      // dibujamos cada celda según su tipo //
+      foreach ( $aTabla as $aCelda) {
+         if ( si_es_key($aCelda,"acceso") === false ||
+              isset($aCelda["filaextra"]) ) {
+            continue;
+         }
 
          // calcular la visualizarión del campo
          $campo      = ddlib_obtenerCampo( $aCelda, $fila  );
-	   	$visualizar = ddlib_visualizarCampo( $aCelda, $campo , $fila ) ;
-	   	$formato    = ddlib_formatoCampo( $aCelda );
+         $visualizar = ddlib_visualizarCampo( $aCelda, $campo , $fila ) ;
+         $formato    = _ddlib_formatoCampo( $aCelda );
 
-		   $classFormato = ( $formato ? " class='$formato'": '');
+         $classFormato = ( $formato ? " class='$formato'": '');
 
-		   if ( isset( $aCelda["styling"])){
-		      $cResul .= "<td$classFormato>" . call_user_func( $aCelda["styling"], $visualizar ) . "</td>";
-		   } else {
-		      $cResul .= "<td$classFormato>$visualizar</td>";
-		   }
-	   }
+         if ( isset( $aCelda["styling"])){
+            $cResul .= "<td$classFormato>" . call_user_func( $aCelda["styling"], $visualizar ) . "</td>";
+         } else {
+            $cResul .= "<td$classFormato>$visualizar</td>";
+         }
+      }
 
-	   /* ahorita dibujamos las opciones */
-	   if ( $lHayOpciones ) {
-   	   $cResul .="<td class='opciones'>".
-   	          	 str_ireplace( "%id%", $fila[$opcionID],
-        	                is_array ( $aOpciones["opciones"]) ? implode ( $separadorOpciones,$aOpciones["opciones"])   :$aOpciones["opciones"]).
-         	        "</td>";
-	   }
-   	$cResul .= "</tr>\n";
-	   $lPar = ! $lPar;
-	   if ( $after) {
-	   	foreach ($after as $llamar) {
-	   		$cResul .= call_user_func ($llamar, $fila);
-	   	}
-	   }
-	}
+      /* ahorita dibujamos las opciones */
+      if ( $lHayOpciones ) {
+         $cOpciones = is_array ( $aOpciones["opciones"]) ? implode ( $separadorOpciones,$aOpciones["opciones"])   :$aOpciones["opciones"];
+         $cResul .="<td class='opciones'>". str_ireplace( "%id%", $fila[$opcionID],$cOpciones) . "</td>";
+      }
+      $cResul .= "</tr>\n";
+      $lPar = ! $lPar;
+      if ( $after) {
+         foreach ($after as $llamar) {
+            $cResul .= call_user_func ($llamar, $fila);
+         }
+      }
+   }
    $cResul .= "\n</tbody>";
 
    mysql_free_result($rsConsulta);
@@ -369,8 +379,6 @@ function _ddlib_consulta_cuerpo ( $aTabla, $cSQL, $aOpciones ){
  * @param $cSQL      consulta SQL sin LIMIT
  * @param $aOpciones menu para cada registro
  */
-
-
 
 function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
    /*
@@ -390,8 +398,8 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
      tituloSinHTML
      menu
      opciones (array o string),
-     		requiere opcionesId
-     		opcional opcionesSeparador
+         requiere opcionesId
+         opcional opcionesSeparador
      queryString
      paginacion
      registrosPorPagina 20
@@ -410,16 +418,10 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     }
 
     // incluir el menu de Opciones
+    $lista ="";
     if ( isset( $aOpciones["menu"] ) ) {
         $aMenu = $aOpciones["menu"];
-        $lista = "";
-        if ( is_array($aMenu) ) {
-            foreach ( $aMenu as $unaOpcion ) {
-                $lista .= "<li>$unaOpcion</li>\n" ;
-            }
-        } else {
-            $lista .= "<li>$aMenu</li>\n" ;
-        }
+        $lista .= "<li>". (is_array($aMenu) ?  implode("</li>\n<li>",$aMenu): $aMenu) ."</li>\n" ;
         $cResul .= "<div class='menuConsulta'>\n<ul>\n$lista</ul></div>";
     }
 
@@ -428,7 +430,6 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
 
     // Calcular cabecera las cabecera de la tabla
     $lHayOpciones = isset($aOpciones["opciones"]);
-
 
     // Ordenar los campos
     global $aEstado;
@@ -444,7 +445,7 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
                 } else {
                     $campos[]= $dd["campo"];
                 }
-            } elseif ( isset($dd["campos"])) {                
+            } elseif ( isset($dd["campos"])) {
                 $campos   = array_merge($campos, array_keys($dd["campos"]));
             }
         }
@@ -453,10 +454,10 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
     }
 
     if ( stripos ( $cSQL, "order by") ){// NO PUEDE SER cero
-    	  //if (preg_match ("#order by (.*)( LIMIT)?#uim", $cSQL, $aTemp )) Esta seria la buena
-  		  if (preg_match ("#order by ([^ ,]*)#uim", $cSQL, $aTemp )){
-  		     $leyenda= $aTemp[1] ;
-  		  }
+        //if (preg_match ("#order by (.*)( LIMIT)?#uim", $cSQL, $aTemp )) Esta seria la buena
+        if (preg_match ("#order by ([^ ,]*)#uim", $cSQL, $aTemp )){
+           $leyenda= $aTemp[1] ;
+        }
     } elseif ( isset($aCampos[$order]["order"])) {
         $cTempOrder = $aCampos[$order]["order"];
         if ( $cTempOrder == 1 ){
@@ -493,9 +494,9 @@ function ddlib_consulta ( $aCampos,  $cSQL, $aOpciones=""  ){
 function _ddlib_script (){
 $aTemp = explode ( "/", $_SERVER["PHP_SELF"] );
 if ( count($aTemp) > 0 )
-	return $aTemp[ count( $aTemp)-1];
+   return $aTemp[ count( $aTemp)-1];
 else
-	return $_SERVER["PHP_SELF"] ;
+   return $_SERVER["PHP_SELF"] ;
 }
 
 
@@ -507,14 +508,14 @@ function _ddlib_option_adicionales ( $dd, $campo ){
    $cRet = "";
 
    if ( isset($dd["valoresAdicionales"] )) {
-   	foreach ( $dd["valoresAdicionales"] as $value => $opcion ) {
-   	   $atributos = ($value==$campo ? " selected='selected' ": "" );
+      foreach ( $dd["valoresAdicionales"] as $value => $opcion ) {
+         $atributos = ($value==$campo ? " selected='selected' ": "" );
          if ( substr($opcion,0,3)== "---") {
-				$atributos .=  " disabled='disabled' ";
-			}
+            $atributos .=  " disabled='disabled' ";
+         }
 
-			$cRet.= "<option value='$value'$atributos>$opcion</option>\n";
-		}
+         $cRet.= "<option value='$value'$atributos>$opcion</option>\n";
+      }
    }
 
    return $cRet;
@@ -550,14 +551,14 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
 
    $aParametros = explode  (" ", $dd["tipo"] );
    $tipo        = strtolower($aParametros[0]);
-	$campo       = ddlib_obtenerCampo ( &$dd, $aDatos);
+   $campo       = ddlib_obtenerCampo ( &$dd, $aDatos);
 
    // atributos por defecto
    $defectos= array (
       "adjunto"     => array ("clase"=>"boton"),
       "infofuncion" => array ("clase"=>"campo-informativo"),
       "readonly"    => array ("clase"=>"campo-informativo"),
-		"info"        => array ("clase"=>"campo-informativo"));
+      "info"        => array ("clase"=>"campo-informativo"));
 
    $atributos = _ddlib_atributos ( $dd, $id, $defectos[$tipo] );
 
@@ -595,7 +596,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
                $maximo = ini_get("upload_max_filesize");
             }
             $adicional = "<span class='tamanno-max'>(MAX: $maximo bytes)</span>" ;
-       
+
            if ( $campo ) {
                $visualizar = "<img src='./{$aParametros[1]}/$campo' class='irudia' /><br/>";
                $visualizar.=  t("Cambiar  imagen: "). "<input type='file' $atributos />\n</br/>";
@@ -662,18 +663,18 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
            $checked     = ( $campo ? " checked='checked' ": "") ;
            return "<input type='checkbox' $atributos $checked value='1' />";
 
-		 case "checkboxes":
-		     if ( isset ( $dd["campos"]) && isset( $dd["etiquetas"] ) ){
-		     		$nCont=1;
-		     		foreach ( $dd["campos"] as $tcampo=>$tipo ){
-		     			$atributos = ( $aDatos[$tcampo] ? " checked='checked' ": "") ;
-		     			$atributos .= " name='$tcampo' id='$id-$nCont' {$dd[atributos]} value='1'";
-		     			$cRet .= "<input type='checkbox' $atributos> ";
-		     			$cRet .= "<label for='$id-$nCont'>".  $dd["etiquetas"][$tcampo]. "</label> \n";
-		     			$nCont++;
-		     		}
-		     		return $cRet;
-		     }
+       case "checkboxes":
+           if ( isset ( $dd["campos"]) && isset( $dd["etiquetas"] ) ){
+               $nCont=1;
+               foreach ( $dd["campos"] as $tcampo=>$tipo ){
+                  $atributos = ( $aDatos[$tcampo] ? " checked='checked' ": "") ;
+                  $atributos .= " name='$tcampo' id='$id-$nCont' {$dd[atributos]} value='1'";
+                  $cRet .= "<input type='checkbox' $atributos> ";
+                  $cRet .= "<label for='$id-$nCont'>".  $dd["etiquetas"][$tcampo]. "</label> \n";
+                  $nCont++;
+               }
+               return $cRet;
+           }
 
            return "";
 
@@ -690,7 +691,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
        case "htmlfijo":
            return substr ($dd["tipo"],9);
 
-		 case "html":
+       case "html":
        case "htmlfuncion":
            return call_user_func ( $aParametros[1] , $aDatos);
 
@@ -711,7 +712,7 @@ function ddlib_editarCampo ( &$dd, &$aDatos, $id ) {
            $size =  $aParametros[1] or $size=40;
            $max  =  $aParametros[2] or $max=$size;
            return "<input type='text' $atributos value='$campo' size='$size' maxlenght='$max' />";
-		 // los campos fecha se generan mediante el atributo.
+       // los campos fecha se generan mediante el atributo.
 
        default:
            return "<input type='text' $atributos value='$campo'/>";
@@ -735,34 +736,34 @@ function ddlib_edicion ( $aTabla, $cSQL="", $aOpciones  ){
        htmldespues
 
        adjunto directorio
-	    imagen directorio
+       imagen directorio
 
-		 lista   ->[lista]
-		 listasql SQL
-		 listafuncion funcion_a_llamar
-						$formatolista
+       lista   ->[lista]
+       listasql SQL
+       listafuncion funcion_a_llamar
+                  $formatolista
        checkbox
        checkboxes
-       		utiliza el campo etiquetas
+            utiliza el campo etiquetas
 
        infofijo información
        infofuncion funcion
        readonly
-		 info
+       info
 
        htmlfijo HTML-bruto
        htmlfuncion funcion
 
-		 nuevopassword size max
+       nuevopassword size max
 
-		 textos cols=40 fila=8
-		 cadena size=40 max=(size or 40)
+       textos cols=40 fila=8
+       cadena size=40 max=(size or 40)
 
-		 -->sino un input=text
-	 adicional
-	 atributos
-	 id
-	 clase
+       -->sino un input=text
+    adicional
+    atributos
+    id
+    clase
 
  cSQL
     si existe, es una modificación
@@ -798,32 +799,32 @@ $cResul .= "\n<form name='editar' method='$cMetodo' action='". _ddlib_script() .
 $cHidden  = "";
 $aAfter   = array();
 if ( isset($aOpciones["hidden"]) ) {
-	foreach ( $aOpciones["hidden"] as $name => $value )  {
-		$cHidden .= "<input type='hidden' name='$name' value='$value' />\n";
-	}
+   foreach ( $aOpciones["hidden"] as $name => $value )  {
+      $cHidden .= "<input type='hidden' name='$name' value='$value' />\n";
+   }
 }
 
 if ( isset($aOpciones["siguienteAccion"]) ) {
    $temp = array ( "c", "a", "i", "order", "PaginaActual") ;
-	foreach ( $aOpciones["siguienteAccion"] as $i=>$value )  {
-		$cHidden .= "<input type='hidden' name='". $temp[$i] . "' value='$value' />\n";
-	}
+   foreach ( $aOpciones["siguienteAccion"] as $i=>$value )  {
+      $cHidden .= "<input type='hidden' name='". $temp[$i] . "' value='$value' />\n";
+   }
 }
 
 
 // se revisan los campos para ver ocultos, obligatorios y demás
 foreach ( $aTabla as $k=>$dd) {
-	list($tipo) = explode ( " ", $dd["tipo"] );
-	$tipo = strtolower($tipo);
+   list($tipo) = explode ( " ", $dd["tipo"] );
+   $tipo = strtolower($tipo);
    // campos hidden
-	if ( $tipo=="hidden" ) {
-		$cHidden .= sprintf( "<input type='hidden' value='%s' name='%s'/>",
-		                     $dd["value"] || $aDatos[$dd["campo"]],
-		                     $dd['campo'] ) ;
-	}
-	if ( $tipo=="htmldespues" ) {
+   if ( $tipo=="hidden" ) {
+      $cHidden .= sprintf( "<input type='hidden' value='%s' name='%s'/>",
+                           $dd["value"] || $aDatos[$dd["campo"]],
+                           $dd['campo'] ) ;
+   }
+   if ( $tipo=="htmldespues" ) {
       $aAfter[] = por_defecto ($dd["funcion"], substr($dd["tipo"],12) );
-	}
+   }
    // Buscamos campos obligatorios
    if (  $aCelda["acceso"] !== false and $aCelda["verifica"]=="no_vacio" ) {
       $lObligatorio = true ;
@@ -841,12 +842,12 @@ $ultimaTabla="";
 
 // obtener los valores
 if ( $cSQL != ""  ) {
-	/* en un modificación los valores se obtienen por una consulta SQL */
-	$aDatos = mysql_query_registro($cSQL);
+   /* en un modificación los valores se obtienen por una consulta SQL */
+   $aDatos = mysql_query_registro($cSQL);
 } else {
-	/* en una adición de obtienen con los valores por defecto */
-	$aDatos = array();
-	foreach ( $aTabla as $dd ) {
+   /* en una adición de obtienen con los valores por defecto */
+   $aDatos = array();
+   foreach ( $aTabla as $dd ) {
             if ( isset($dd["campo"])) {
                 $aDatos[ $dd["campo"] ]= (isset($dd["defecto"])? $dd["defecto"] : "" );
             } else {
@@ -857,7 +858,7 @@ if ( $cSQL != ""  ) {
                 }
             }
 
-	}
+   }
 }
 
 
@@ -867,15 +868,15 @@ $nTabla= 1;
 if ( $aDatos ) {
    $cTable = "";
 
-	foreach ( $aTabla as $k=>$dd ){
+   foreach ( $aTabla as $k=>$dd ){
 
-	   if ( $dd["acceso"]=== false ) {
-	      continue;
-	   }
+      if ( $dd["acceso"]=== false ) {
+         continue;
+      }
 
       // obtener el tipo de campo
-		$aParametros = explode  (" ", $dd["tipo"] );
-		$cTipo       = strtolower($aParametros[0]);
+      $aParametros = explode  (" ", $dd["tipo"] );
+      $cTipo       = strtolower($aParametros[0]);
 
       switch ( $cTipo ) {
          // casos especiales
@@ -893,51 +894,51 @@ if ( $aDatos ) {
             $nTabla++;
             $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
 
-			case "separador":
+         case "separador":
             if ( !$ultimaTabla ){
                  $ultimaTabla= por_defecto ( $aOpciones["tablaID"], "tabla-$nCont");
                  $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
             }
 
-			   $atributos   = _ddlib_atributos   ( $dd, "$prefijoID$nCont"  ) ;
-			   $cTabla .= "\n<tr class='separador'>\n";
+            $atributos   = _ddlib_atributos   ( $dd, "$prefijoID$nCont"  ) ;
+            $cTabla .= "\n<tr class='separador'>\n";
             $cTabla .= "<th colspan='2' $atributos>{$dd[cabecera]}</th></tr>\n";
-				break;
+            break;
 
          // adjuntos e imagenes
-			default:
-			   if ( $visualizar = ddlib_editarCampo ( $dd, $aDatos, "$prefijoID$nCont" )){
+         default:
+            if ( $visualizar = ddlib_editarCampo ( $dd, $aDatos, "$prefijoID$nCont" )){
 
                if ( !$ultimaTabla ){
                   $ultimaTabla= por_defecto ( $aOpciones["tablaID"], "tabla-$nCont");
                   $cTabla .= "\n<table $atributosTabla id='$ultimaTabla'>\n";
                }
 
-      			$obligatorio = ( $dd["verifica"]=="no_vacio" ? " class='obligatorio'" : "" );
-      			$adicional   = ( $dd["adicional"] ? "<span class='adicional'>{$dd[adicional]}</span>" : "");
+               $obligatorio = ( $dd["verifica"]=="no_vacio" ? " class='obligatorio'" : "" );
+               $adicional   = ( $dd["adicional"] ? "<span class='adicional'>{$dd[adicional]}</span>" : "");
 
 
-					if ( isset( $dd["campos"])  ){ // los campos multiples no tienen etiqueta
-						$cTabla    .= "\n <tr><th $obligatorio>{$dd[cabecera]}</th>";
-					}else {
-               	$cTabla    .= "\n <tr><th><label for='$prefijoID$nCont' $obligatorio>{$dd[cabecera]}</label></th>";
+               if ( isset( $dd["campos"])  ){ // los campos multiples no tienen etiqueta
+                  $cTabla    .= "\n <tr><th $obligatorio>{$dd[cabecera]}</th>";
+               }else {
+                  $cTabla    .= "\n <tr><th><label for='$prefijoID$nCont' $obligatorio>{$dd[cabecera]}</label></th>";
                }
 
-      			$cTabla    .= "\n     <td>$visualizar $adicional</td></tr>";
+               $cTabla    .= "\n     <td>$visualizar $adicional</td></tr>";
 
            }
-		}
-		$nCont++;
+      }
+      $nCont++;
 
-	} // fin del bucle foreach del dd
+   } // fin del bucle foreach del dd
 
-	// botones de Enviar y Volver.
-	$cTabla .= "<tr><td class='botones-enviar' colspan='2'><input type='submit' value='{$cEnviar}' class='boton' />";
-	if ( $aOpciones["volver"]===true ){
-	   $cTabla .= "<a href='" . strtr( $_SERVER["HTTP_REFERER"], array("&"=>"&amp;") ) ."' class='boton'>Volver</a>";
-	}
+   // botones de Enviar y Volver.
+   $cTabla .= "<tr><td class='botones-enviar' colspan='2'><input type='submit' value='{$cEnviar}' class='boton' />";
+   if ( $aOpciones["volver"]===true ){
+      $cTabla .= "<a href='" . strtr( $_SERVER["HTTP_REFERER"], array("&"=>"&amp;") ) ."' class='boton'>Volver</a>";
+   }
 
-	$cTabla .= "</td></tr>\n";
+   $cTabla .= "</td></tr>\n";
 
 }
 
@@ -969,67 +970,67 @@ function dd_verificaCampo( $aDatos ){
       return "" ;
    }
 
-	$aErrores = explode ( "|" , $aDatos["verifica"]);
-  	$cCampo   = $_REQUEST[$aDatos["campo"]];
+   $aErrores = explode ( "|" , $aDatos["verifica"]);
+   $cCampo   = $_REQUEST[$aDatos["campo"]];
 
    switch ( trim(strtolower($aErrores[0]))){
-   	case "no_vacio":
-   	case "no_nulo":
-   		if ( $cCampo=="" ){
-   			return (isset($aErrores[1])? $aErrores[1] : "El campo ". $aDatos["cabecera"] . " no puede estar vacio.");
-   		}
-   		break;
+      case "no_vacio":
+      case "no_nulo":
+         if ( $cCampo=="" ){
+            return (isset($aErrores[1])? $aErrores[1] : "El campo ". $aDatos["cabecera"] . " no puede estar vacio.");
+         }
+         break;
 
-   	case ">"	:
-			if ( $cCampo > $aErrores[1])
-				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser mayor que ". $aErrores[1]);
-			break;
+      case ">" :
+         if ( $cCampo > $aErrores[1])
+            return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser mayor que ". $aErrores[1]);
+         break;
 
-		case ">=":
-			if ( $cCampo >= $aErrores[1])
-				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] .
-			                   " tienen que ser mayor o igual que ". $aErrores[1]);
-		   break;
+      case ">=":
+         if ( $cCampo >= $aErrores[1])
+            return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] .
+                            " tienen que ser mayor o igual que ". $aErrores[1]);
+         break;
 
-		case "<":
-			if ( $cCampo < $aErrores[1])
-  				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor ". $aErrores[1]);
-   		break;
+      case "<":
+         if ( $cCampo < $aErrores[1])
+            return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor ". $aErrores[1]);
+         break;
 
-		case "<=":
-   		if ( $cCampo < $aErrores[1])
-				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor o igual ". $aErrores[1]);
-			break;
+      case "<=":
+         if ( $cCampo < $aErrores[1])
+            return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor o igual ". $aErrores[1]);
+         break;
 
-		case "!=":
-   		if ( $cCampo != $aErrores[1])
-  				return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor o igual ". $aErrores[1]);
-   		break;
+      case "!=":
+         if ( $cCampo != $aErrores[1])
+            return (isset($aErrores[2])? $aErrores[2]: "El campo ". $aDatos["cabecera"] . " tienen que ser menor o igual ". $aErrores[1]);
+         break;
 
-		case "between":
-		case "entre":
-		   if ( $cCampo >= $aErrores[1] and $cCampo <= $aErrores[2])
-			   return (isset($aErrores[3])? $aErrores[3]: "El campo ". $aDatos["cabecera"] .
-			                  " tienen que estar entre ". $aErrores[1] . " y " . $aErrores[2] );
-		   break;
+      case "between":
+      case "entre":
+         if ( $cCampo >= $aErrores[1] and $cCampo <= $aErrores[2])
+            return (isset($aErrores[3])? $aErrores[3]: "El campo ". $aDatos["cabecera"] .
+                           " tienen que estar entre ". $aErrores[1] . " y " . $aErrores[2] );
+         break;
 
-		case "verifica": 			// comprobar que dos campos coinciden
- 		   if ( $cCampo != $_REQUEST[$aErrores[1]])
-			   return (isset($aErrores[2]) ? $aErrores[2] : "Verificación incorrecta");
-	      break;
+      case "verifica":        // comprobar que dos campos coinciden
+         if ( $cCampo != $_REQUEST[$aErrores[1]])
+            return (isset($aErrores[2]) ? $aErrores[2] : "Verificación incorrecta");
+         break;
 
-		case "funcion":
- 			if ( call_user_func( $aErrores[1], $cCampo, ($cWhere=="" ? "INSERT" : "UPDATE") ))
-			   return (isset($aErrores[2])? $aErrores[2] : "El campo no cumple la condicion");
-		   break;
+      case "funcion":
+         if ( call_user_func( $aErrores[1], $cCampo, ($cWhere=="" ? "INSERT" : "UPDATE") ))
+            return (isset($aErrores[2])? $aErrores[2] : "El campo no cumple la condicion");
+         break;
 
-  		case "funcioncompleta":
-	   	/* @TODO ¿pasamos todo el request? */
-	   	if ( call_user_func ( $aErrores[1], $_REQUEST ))
-	   		return  (isset($aErrores[2])? $aErrores[2]: "El campo no cumple la condicion");
-	   	break;
-	}
-	return "";
+      case "funcioncompleta":
+         /* @TODO ¿pasamos todo el request? */
+         if ( call_user_func ( $aErrores[1], $_REQUEST ))
+            return  (isset($aErrores[2])? $aErrores[2]: "El campo no cumple la condicion");
+         break;
+   }
+   return "";
 }
 
 
@@ -1038,7 +1039,7 @@ function dd_verificaCampo( $aDatos ){
 */
 
 function ddlib_salvar( $dd, $cTabla, $cWhere="",$aOpciones= NULL ){
-	return ddlib_guardar ( $cTabla, $cWhere, $dd, $aOpciones);
+   return ddlib_guardar ( $cTabla, $cWhere, $dd, $aOpciones);
 }
 
 
@@ -1049,13 +1050,13 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
 
    //  Primero verificamos las condiciones de cada campo
    foreach ( $aEdicion as $aDatos ) {
-	   $cError .= ( isset($aDatos["verifica"]) ? ddlib_verificaCampo ($aDatos) : "");
-	}
+      $cError .= ( isset($aDatos["verifica"]) ? ddlib_verificaCampo ($aDatos) : "");
+   }
 
    // Revisar los errores
    if ( $cError !="") {
       if ( isset( $aOpciones["errorverificacion"])  ){
-			$cError =  $aOpciones["errorverificacion"] . $cError;
+         $cError =  $aOpciones["errorverificacion"] . $cError;
       }
       return mensajeHTML ( $cError, "error " . ($cNuevo ? "añadir" : "guardar") ) ;
    }
@@ -1064,33 +1065,33 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
 
    // al terminar la verificación revisar los errores
    foreach ( $aEdicion as $aDatos ) {
-	   if ( isset($aDatos["acceso"]) and !$aDatos["acceso"]){
-        	continue;
+      if ( isset($aDatos["acceso"]) and !$aDatos["acceso"]){
+         continue;
       }
 
-   	$aParametros = explode (" ", $aDatos["tipo"]);
-   	switch ( strtolower($aParametros[0] )){
-   		case "hidden":
-   		case "info":
-   		case "htmldespues":
-   		case "infofuncion":
-   		case "separador":
-   		case "separadortabla":
-   		case "verificapassword":
-   		case "readonly":
-   			break;
+      $aParametros = explode (" ", $aDatos["tipo"]);
+      switch ( strtolower($aParametros[0] )){
+         case "hidden":
+         case "info":
+         case "htmldespues":
+         case "infofuncion":
+         case "separador":
+         case "separadortabla":
+         case "verificapassword":
+         case "readonly":
+            break;
 
-		case "adjunto":
-   		case "imagen" :
-   		case "irudia" :
+      case "adjunto":
+         case "imagen" :
+         case "irudia" :
             if ( $_REQUEST[ $aDatos["campo"]."_BORRAR"]=='1' || $_REQUEST[ $aDatos["campo"]."_EZABATU"]=='1' ){
                sql_add($aSQL,  $aDatos["campo"], "", "cadena");
             } else {
-				   $lPendiente = true;
-			}
-   			break;
+               $lPendiente = true;
+         }
+            break;
 
-   		case "nuevopassword":
+         case "nuevopassword":
             if ( $_REQUEST[$aDatos["campo"]] !="" ){
                 if ( isset($aParametros[3]) and $aParametros[3]=="md5")
                     sql_add( $aSQL, $aDatos["campo"], md5($_REQUEST[$aDatos["campo"]]), "cadena");
@@ -1102,64 +1103,64 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
             break;
 
          case "fijo":
-   			sql_add($aSQL,  $aDatos["campo"], $aDatos["valor"], $aParametros[1]);
+            sql_add($aSQL,  $aDatos["campo"], $aDatos["valor"], $aParametros[1]);
             break;
 
          case "listavalores":
-   			sql_add_request( $aSQL,  $aDatos["campo"], por_defecto($aParametros[2],"cadena") );
-   			break;
+            sql_add_request( $aSQL,  $aDatos["campo"], por_defecto($aParametros[2],"cadena") );
+            break;
 
-   		case "listafuncion":
-   			sql_add_request( $aSQL,  $aDatos["campo"], $aParametros[2]);
-   			break;
+         case "listafuncion":
+            sql_add_request( $aSQL,  $aDatos["campo"], $aParametros[2]);
+            break;
 
-   		default:
+         default:
 
-   		   if ( isset($aDatos["campos"]) ) {
-   		      foreach ($aDatos["campos"] as $tcampo => $tipo){
+            if ( isset($aDatos["campos"]) ) {
+               foreach ($aDatos["campos"] as $tcampo => $tipo){
                   sql_add_request ( $aSQL,  $tcampo, $tipo);
-   		      }
-   		   } elseif (isset($aDatos["campo"]))  {
-   		      // el campo puede ser de diversos tipos.
-   		      list($tipoCampo, $tcampo, $tmas) = explode (" ",$aDatos["campo"]);
-   		      switch ( strtolower($aDatos["campo"]) ) {
-   		         case "tcampo":
-   		         case "funcionget":
-   		         case "funcion":
-   		             // estos son campos de consulta no se pueden escribir
-   		             break;
+               }
+            } elseif (isset($aDatos["campo"]))  {
+               // el campo puede ser de diversos tipos.
+               list($tipoCampo, $tcampo, $tmas) = explode (" ",$aDatos["campo"]);
+               switch ( strtolower($aDatos["campo"]) ) {
+                  case "tcampo":
+                  case "funcionget":
+                  case "funcion":
+                      // estos son campos de consulta no se pueden escribir
+                      break;
 
-   		         case "serialize":
-   		         case "serializa":
-   		            sql_add_request ( $aSQL,  serialize($aDatos["campo"]), $tcampo);
-   		            break;
+                  case "serialize":
+                  case "serializa":
+                     sql_add_request ( $aSQL,  serialize($aDatos["campo"]), $tcampo);
+                     break;
 
                   default:
-      		         sql_add_request ( $aSQL,  $aDatos["campo"],$aParametros[0]);
-   		      }
+                     sql_add_request ( $aSQL,  $aDatos["campo"],$aParametros[0]);
+               }
             }
 
-   	}
+      }
    }
 
    // si hemos recogido campos, salvamos (puede ser un caso de solo imágenes )
-	if ( sql_esvacia($aSQL) ) {
+   if ( sql_esvacia($aSQL) ) {
       $lResul = true ;
-	} else {
-	   $lResul = mysql_query( sql_sql ( $aSQL ) );
+   } else {
+      $lResul = mysql_query( sql_sql ( $aSQL ) );
    }
 
-	if ( $lResul and $lPendiente ){
-	   ddlib_guardarAdjuntos( $cTabla, $cWhere, $aEdicion);
-	}
+   if ( $lResul and $lPendiente ){
+      ddlib_guardarAdjuntos( $cTabla, $cWhere, $aEdicion);
+   }
 
 
    // Devolver resultado
    if ( $lResul) {
-	   	$lResul = ( $aOpciones["ok"] ?  "<div class='guardarOk'   >{$aOpciones[ok]}</div>": true );
-	} else {
-	  	   $lResul = ( $aOpciones["ok"] ?  "<div class='guardarError'>{$aOpciones[error]}</div>" : false );
-	}
+         $lResul = ( $aOpciones["ok"] ?  "<div class='guardarOk'   >{$aOpciones[ok]}</div>": true );
+   } else {
+         $lResul = ( $aOpciones["ok"] ?  "<div class='guardarError'>{$aOpciones[error]}</div>" : false );
+   }
 
    return $lResul ;
 }
@@ -1167,80 +1168,72 @@ function ddlib_guardar ( $cTabla, $cWhere, $aEdicion, $aOpciones = NULL ){
 
 
 function ddlib_guardarAdjuntos( $cTabla, $cWhere, $aEdicion) {
-	// hacemos una seguna pasada para la imágenes, los adjuntos y demás.
-	// preparamos la nueva ID
+   // hacemos una seguna pasada para la imágenes, los adjuntos y demás.
+   // preparamos la nueva ID
 
-	if ( $cWhere == ""){
-		$mID     = mysql_insert_id();
-		$campoID = mysql_campoClave($cTabla);
-		$aSQL    = sql_crear ("update", $cTabla, "$campoID=$mID" );
-	} else {
-		$campoID = mysql_campoClave($cTabla);
-		$mID     = mysql_mlookup("SELECT $campoID FROM $cTabla WHERE $cWhere" );
-		$aSQL    = sql_crear ("update", $cTabla, $cWhere );
-	}
+   if ( $cWhere == ""){
+      $mID     = mysql_insert_id();
+      $campoID = mysql_campoClave($cTabla);
+      $aSQL    = sql_crear ("update", $cTabla, "$campoID=$mID" );
+   } else {
+      $campoID = mysql_campoClave($cTabla);
+      $mID     = mysql_mlookup("SELECT $campoID FROM $cTabla WHERE $cWhere" );
+      $aSQL    = sql_crear ("update", $cTabla, $cWhere );
+   }
 
    // ahorita buscamos imágenes y demás
-	foreach ( $aEdicion as $aDatos ) {
-			$aParametros = explode (" ", $aDatos["tipo"]);
-			$cTipo       = strtolower($aParametros[0]);
-			$cFile       = $aDatos["campo"];
+   foreach ( $aEdicion as $aDatos ) {
+         $aParametros = explode (" ", $aDatos["tipo"]);
+         $cTipo       = strtolower($aParametros[0]);
+         $cFile       = $aDatos["campo"];
 
-			if ( ($cTipo == "adjunto" ||  $cTipo == "imagen" || $cTipo == "irudia" )
-			     and isset($_FILES[$cFile]) and $_FILES[$cFile]["name"]
-			     and isset($aParametros[1]) ){
-				if ( isset($aParametros[2]) ) {
-				   // mascara para guardar el nombre del nuevo fichero
-					$aTempFile    = extrae_ExtensionNombre ($_FILES[$cFile]["name"]);
-					$cNuevoNombre = strtr ( $aParametros[2], array("%i"=>$mID, "%n"=>$aTempFile["nombre"], "%e"=>$aTempFile["ext"]));
-				} else {
-					$cNuevoNombre = $_FILES[$cFile]["name"];
-				}
+         if ( ($cTipo == "adjunto" ||  $cTipo == "imagen" || $cTipo == "irudia" )
+              and isset($_FILES[$cFile]) and $_FILES[$cFile]["name"]
+              and isset($aParametros[1]) ){
+            if ( isset($aParametros[2]) ) {
+               // mascara para guardar el nombre del nuevo fichero
+               $aTempFile    = extrae_ExtensionNombre ($_FILES[$cFile]["name"]);
+               $cNuevoNombre = strtr ( $aParametros[2], array("%i"=>$mID, "%n"=>$aTempFile["nombre"], "%e"=>$aTempFile["ext"]));
+            } else {
+               $cNuevoNombre = $_FILES[$cFile]["name"];
+            }
 
-				if ( !move_uploaded_file($_FILES[$cFile]["tmp_name"], $aParametros[1] . "/" . $cNuevoNombre) ){
+            if ( !move_uploaded_file($_FILES[$cFile]["tmp_name"], $aParametros[1] . "/" . $cNuevoNombre) ){
               echo sprintf("<div class='gaizkiTxiki'>Error al subir el fichero (campo %s). ¿tiene más de %sbytes?</div>\n", $aDatos["campo"],ini_get("upload_max_filesize") ) ;
             } else {
-					sql_add($aSQL, $aDatos["campo"], $cNuevoNombre, "cadena");
+               sql_add($aSQL, $aDatos["campo"], $cNuevoNombre, "cadena");
 
-					// ahora vemos si hay que hacer thumbnail
-					if (  $cTipo == "imagen" || $cTipo == "irudia") {
-   					if ( isset($aDatos["thumbnail"]) ){
-   					   $aThumb = explode ( " ", $aDatos["thumbnail"] );
-   					   switch ( count($aThumb)) {
-   					     case "0" : break;
-   					     case "1" : $aThumb[1] = $aThumb[0];
-   					     case "2" : $aThumb[2] = 75;
-   					     case "3" : $aThumb[3] = "thumb";
-   					     case "4" : $aThumb[4] = "nocrop";
-   					     default  :
-   					         crearThumbnail ( $aParametros[1], $cNuevoNombre, $aThumb[3],
-         					      $aThumb[0], $aThumb[1], $aThumb[2], $aThumb[4] ) ;
-   					    }
-   					 }
-   					 // ahora vermos si hay que ajustar la imagen
+               // ahora vemos si hay que hacer thumbnail
+               if (  $cTipo == "imagen" || $cTipo == "irudia") {
+                  if ( isset($aDatos["thumbnail"]) ){
+                     $aThumb = explode ( " ", $aDatos["thumbnail"] );
+                     switch ( count($aThumb)) {
+                       case "0" : break;
+                       case "1" : $aThumb[1] = $aThumb[0];
+                       case "2" : $aThumb[2] = 75;
+                       case "3" : $aThumb[3] = "thumb";
+                       case "4" : $aThumb[4] = "nocrop";
+                       default  :
+                           crearThumbnail ( $aParametros[1], $cNuevoNombre, $aThumb[3],
+                              $aThumb[0], $aThumb[1], $aThumb[2], $aThumb[4] ) ;
+                      }
+                   }
+                   // ahora vermos si hay que ajustar la imagen
                    if ( isset($aDatos["ajustar"]) ){
-   					   $aThumb[0]= (int) $aDatos["ajustar"];
-   					   mImageResize( $aParametros[1] . "/" . $cNuevoNombre, $aParametros[1] . "/" . $cNuevoNombre, "KEEP_PROPORTIONS_ON_BIGGEST", $aThumb[0]);
-   					 }
-					}
-				}
-			}
-   	}
-   	// grabamos si es que hemos podido mover
-   	if ( !sql_esvacia($aSQL) ) {
-     		mysql_query( sql_sql($aSQL) );
-     	}
+                     $aThumb[0]= (int) $aDatos["ajustar"];
+                     mImageResize( $aParametros[1] . "/" . $cNuevoNombre, $aParametros[1] . "/" . $cNuevoNombre, "KEEP_PROPORTIONS_ON_BIGGEST", $aThumb[0]);
+                   }
+               }
+            }
+         }
+      }
+      // grabamos si es que hemos podido mover
+      if ( !sql_esvacia($aSQL) ) {
+         mysql_query( sql_sql($aSQL) );
+      }
 
 }
 
-
-/**
-* funciones para mostrar resultados
-*/
-
-function dd1_mostrarActivo ( $nValor) {
-   return  ( $nValor==1 ? "Bai": "");
-}
 
 
 function ddlib_tablaEdicionConsulta ( $cTitulo, $aTabla,  $cSQL, $aHidden=NULL, $nMax=5 ){
@@ -1263,8 +1256,8 @@ function ddlib_tablaEdicionConsulta ( $cTitulo, $aTabla,  $cSQL, $aHidden=NULL, 
 
    /* Dibujar las cabeceras de datos */
    foreach ( $aTabla as  $oCelda) {
-	   $cResul .= "\n   <th>{$oCelda[cabecera]}</th>";
-  	}
+      $cResul .= "\n   <th>{$oCelda[cabecera]}</th>";
+   }
    $cResul .= "\n   <th></th>";
 
    $cResul .="</tr>\n</thead>\n";
@@ -1284,23 +1277,23 @@ function ddlib_tablaEdicionConsulta ( $cTitulo, $aTabla,  $cSQL, $aHidden=NULL, 
          }
       }
 
-	   $cResul .=  "   <tr class='". ($lHayDatos ? "datos" : "nuevo") . ($nCont%2 ? ' impar' : "" ) .     "' >";
+      $cResul .=  "   <tr class='". ($lHayDatos ? "datos" : "nuevo") . ($nCont%2 ? ' impar' : "" ) .     "' >";
 
-	   // dibujamos cada celda según su tipo
-	   $cPrimero = " class='primero'";
-	   foreach ( $aTabla as  $oCelda) {
-	      $campo = $oCelda['campo'];
-	      $valor = $lerroa[$campo];
-	      if ( $oCelda["tipo"] == "hidden" ) {
-	         $cHidden .= "<input type='hidden' name='$campo$nCont' value='$valor'>\n";
-	      } else {
-	         $cResul .= "<td$cPrimero><input tpye='text' name='$campo$nCont' value='$valor' $onChange></td>";
-	         $cPrimero ="";
-	      }
-	   }
-		$cResul .= "</tr>\n";
+      // dibujamos cada celda según su tipo
+      $cPrimero = " class='primero'";
+      foreach ( $aTabla as  $oCelda) {
+         $campo = $oCelda['campo'];
+         $valor = $lerroa[$campo];
+         if ( $oCelda["tipo"] == "hidden" ) {
+            $cHidden .= "<input type='hidden' name='$campo$nCont' value='$valor'>\n";
+         } else {
+            $cResul .= "<td$cPrimero><input tpye='text' name='$campo$nCont' value='$valor' $onChange></td>";
+            $cPrimero ="";
+         }
+      }
+      $cResul .= "</tr>\n";
 
-	}
+   }
    $cResul .= "</tbody>\n";
    $cResul .= "</table>\n";
 
