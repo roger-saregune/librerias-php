@@ -5,11 +5,10 @@
 * libreria de imagenes
 * @author Roger
 * @licence GPL
-* @version 2006-09-12
+* @version 2011-05-26
 *
 * 2006-09-12
 * Creado con las funciones 
-*  - tipoImagen, extrae el tipo (jpg,png,gif) a partir del nombre
 	- mImageCreatFrom
 		Crea una imagen a partir de un fichero jpg,gif o png.
 	- mImagenResize
@@ -21,75 +20,60 @@
 
 include_once "funciones.php";
 
-function tipoImagen( $cFile) {
-   if (preg_match('/(jpg|jpeg)$/i',$cFile,$matches)) {
-      return "jpg";
-      }
-   if (preg_match('/(png)$/i',$cFile, $matches)) { 
-      return "png";      
-     }
-   if (preg_match('/(gif)$/i',$cFile)){   
-      return "gif";
-     }
-   return "ND";
-}
+define("IMAGENES_MAXIMO_XY", 1200);
 
-
-function mImageCreateFrom ( $cFile )	{	  
- 	switch ( tipoImagen ( $cFile) ) { 
-      case "jpg": 
-         return imageCreatefromjpeg($cFile);
-         break;
-      case "gif":
-         return imageCreatefromgif($cFile);
-         break;
-      case "png":
-         return  imageCreatefrompng($cFile);
-         break;
-      default:
-         return false;
-    }                  
+function mImageCreateFrom ( $file, $tipo )	{
+    switch ( $tipo ) { 
+        case IMAGETYPE_GIF : return imageCreatefromgif($file);
+        case IMAGETYPE_JPEG: return imageCreatefromjpeg($file);
+        case IMAGETYPE_PNG:  return imageCreatefrompng($file);
+    }     
 }
 
 
 function mImageResize ($sFileNameFrom, $sFileNameTo, $KEEP_PROPORTIONS, $iProp1, $iProp2=0) {
-	/* idea original de malam extraido de zend codex */
-	$aProportions = array ('DO_NOT_KEEP_PROPORTIONS', 'KEEP_PROPORTIONS_ON_WIDTH', 'KEEP_PROPORTIONS_ON_HEIGHT', 'KEEP_PROPORTIONS_ON_BIGGEST', 'KEEP_PROPORTIONS_ON_SMALLEST');
-	
-	// comprobación de parametros correctos.
-	if (!file_exists ($sFileNameFrom) ) {
-	   echo "error parámetros: no hay fichero\n";     
-   	return false;
-	} 
-	
-   if ( empty ($KEEP_PROPORTIONS) || !in_array ($KEEP_PROPORTIONS, $aProportions ) ) {
-	   echo "error parámetros: falta método. Se esperaba (DO_NOT_KEEP_PROPORTIONS, KEEP_PROPORTIONS_ON_WIDTH, KEEP_PROPORTIONS_ON_HEIGHT, KEEP_PROPORTIONS_ON_BIGGEST, KEEP_PROPORTIONS_ON_SMALLEST)\n";     
-   	return false;
-	} 	
+    /* idea original de malam extraido de zend codex */
+    $aProportions = array (
+        'DO_NOT_KEEP_PROPORTIONS', 
+        'KEEP_PROPORTIONS_ON_WIDTH', 
+        'KEEP_PROPORTIONS_ON_HEIGHT', 
+        'KEEP_PROPORTIONS_ON_BIGGEST', 
+        'KEEP_PROPORTIONS_ON_SMALLEST');
 
-   if ( !is_int($iProp1)) {
-	   echo "error parámetros: la proporción no es número\n";     
-   	return false;
-	} 
-	
-	$aImg = @getimagesize ($sFileNameFrom);
-   if (false === $aImg) {
-     echo "error: [$sFileNameFrom] no es una imagen";
-     return false;
-   }
-   
-   // comprobar extensión 
-	$aTypes = array (1 => 'gif', 2 => 'jpeg', 3 => 'png');
-   if (!in_array ($aImg[2], array_keys ($aTypes))) {
-       echo "error:  [$sFileNameFrom] no es png, jpg, o gif";
-       return false;
-   }
+    // comprobación de parametros correctos.
+    if (!file_exists ($sFileNameFrom) ) {
+        echo "error parámetros: no hay fichero\n";     
+        return false;
+    } 
+
+    if ( empty ($KEEP_PROPORTIONS) || !in_array ($KEEP_PROPORTIONS, $aProportions ) ) {
+        echo "error parámetros: falta método. Se esperaba (DO_NOT_KEEP_PROPORTIONS, KEEP_PROPORTIONS_ON_WIDTH, KEEP_PROPORTIONS_ON_HEIGHT, KEEP_PROPORTIONS_ON_BIGGEST, KEEP_PROPORTIONS_ON_SMALLEST)\n";     
+        return false;
+    } 	
+
+    if ( !is_int($iProp1)) {
+        echo "error parámetros: la proporción no es número\n";     
+        return false;
+    } 
+
+    $aImg = @getimagesize ($sFileNameFrom);
+    if (false === $aImg ) {
+        echo "error: [$sFileNameFrom] no es una imagen";
+        return false;
+    }
+
+    list($w,$h,$tipo)= $aImg;
+    
+    if ($tipo!= IMAGETYPE_GIF && $tipo!=IMAGETYPE_JPEG $tipo!=IMAGETYPE_PNG ) {
+        echo "error: [$sFileNameFrom] no esta en un formato válido (png,gif,jpg)";
+        return false;
+    }
    
    switch ($KEEP_PROPORTIONS){
    	case 'KEEP_PROPORTIONS_ON_WIDTH' :
       	$width = $iProp1;
-         $height = round ( $width * ($aImg[1]/$aImg[0]));
-         break;
+        $height = round ( $width * ($aImg[1]/$aImg[0]));
+        break;
           
       case 'KEEP_PROPORTIONS_ON_HEIGHT' :
          $height = $iProp1;         
@@ -126,11 +110,11 @@ function mImageResize ($sFileNameFrom, $sFileNameTo, $KEEP_PROPORTIONS, $iProp1,
      }
      
      // primero se crea la función
-     $im = mImageCreateFrom ($sFileNameFrom);
+     $im = mImageCreateFrom ($sFileNameFrom, $tipo);
      if ( $im === false )
-     		return ;
+     	return ;
      $image_p = imagecreatetruecolor($width, $height);     
-     imagecopyresampled($image_p, $im, 0, 0, 0, 0, $width, $height, $aImg[0], $aImg[1]);
+     imagecopyresampled($image_p, $im, 0, 0, 0, 0, $width, $height, $w, $h);
 	  
 	  // ahora salvamos     
      $saveImg = create_function ('$img, $sFileNameTo', 'return @image'.$aTypes[$aImg[2]].'($img, $sFileNameTo);');
@@ -185,10 +169,22 @@ function crearThumbnail ( $cDir, $cFile, $cSufijo, $thumbnail_max_width, $thumbn
 }
 
 /* TEST DE UNIDAD 
+
+mprint ( getimagesize("a01_handia.png"));
+mprint ( getimagesize("fondo.gif"));
+mprint ( getimagesize("urbano.jpeg"));
+mprint ( getimagesize("rosas.gif"));
+
+echo "<br>No existe fichero:";
+mprint ( @getimagesize("rosas.gifa"));
+
+echo "*<br>No es imagen:";
+mprint ( @getimagesize("ff.txt"));
+
+/*
 mImageResize  ( "lema01.gif", "nuevo.gif", "KEEP_PROPORTIONS_ON_WIDTH", 253,50);
 crearThumbnail ( "", "lema01.gif", "_thumb", 50,50,75 )
 */
 
  
-
 ?>
